@@ -1,6 +1,6 @@
 {
   "name": "Jadwal Pelayanan PAW",
-  "short_name": "Jadwal PAW",
+  "short_name": "Jadwal Pelayanan PAW",
   "description": "Jadwal pelayanan musik PAW - GMS Salatiga",
   "start_url": "/jadwal-pelayanan/jadwal/PAW/",
   "scope": "/jadwal-pelayanan/jadwal/PAW/",
