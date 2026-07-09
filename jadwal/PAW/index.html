@@ -99,7 +99,6 @@ input, textarea {
 .dr-item.on::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:#e8b84b}
 .dr-item svg{opacity:.6;flex-shrink:0;transition:opacity .15s}
 .dr-item.on svg{opacity:1}
-.dr-close{padding:14px 18px;border-top:1px solid rgba(255,255,255,.07);color:#4a5070;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 
 /* ── PAGE ─────────────────── */
 .page {
@@ -363,7 +362,6 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     <div class="dr-item" id="dn-catatan" onclick="navTo('catatan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Catatan</div>
     <div class="dr-item" id="dn-masukan" onclick="navTo('masukan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Kritik &amp; Saran</div>
   </nav>
-  <div class="dr-close" onclick="closeDr()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Tutup</div>
 </div>
 
 <div class="page">
@@ -462,6 +460,16 @@ function hideSplash(){
   }, wait);
 }
 window.addEventListener('load', hideSplash);
+
+// ============================================================
+//  APP TEMPLATE CONFIG — edit these when cloning for a new department
+// ============================================================/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+var APP_CONFIG = {
+  storagePrefix: "paw_",        // unique per department! prevents saved-name clashes if hosted on same domain
+  appTitle: "Jadwal Pelayanan", // main header line 1
+  deptLabel: "PAW DEPARTMENT",  // small orange badge under the title
+  ringkasanBrand: "PAW"         // short brand text on the Ringkasan summary image
+};
   
 // ============================================================
 //  ORIGINAL APP CODE — unchanged below this point
@@ -495,7 +503,7 @@ var SS={1:"background:rgba(244,160,110,.10)",2:"background:rgba(250,200,100,.09)
 
 var PAW_ROLES=["Speaker","WL","Singer","Keys","Guitar","Bass","Drums","SPV","MD","Sequencer","SD","CM","Soundman"];
 
-var REGULAR_SERVICES=["Ibadah 1","Ibadah 2","Ibadah 3","Doa Malam"];
+var REGULAR_SERVICES=["Voltage","AOG Teens","AOG Youth","Ibadah 1","Ibadah 2","Ibadah 3"];
 
 function C(r){return RC[(r||"").toLowerCase()]||RC.soundman;}
 function chipCss(r){var c=C(r);return"color:"+c.fg+";background:"+c.bg;}
@@ -529,9 +537,9 @@ var st={
 
 google.script.run.withSuccessHandler(function(c){
   var church=c.churchName||"GMS Salatiga";
-  document.getElementById("hdr-l1").textContent="Jadwal Pelayanan";
-  document.getElementById("hdr-l2").textContent="PAW DEPARTMENT";
-  document.getElementById("dr-team").textContent="Jadwal Pelayanan";
+  document.getElementById("hdr-l1").textContent=APP_CONFIG.appTitle;
+  document.getElementById("hdr-l2").textContent=APP_CONFIG.deptLabel;
+  document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
   document.getElementById("dr-church").textContent=church;
   if(c.rosterStructure)ROST=c.rosterStructure;
   if(c.pawRoles)PAW_ROLES=c.pawRoles;
@@ -550,7 +558,7 @@ if(c.logoUrl){
 google.script.run.withSuccessHandler(function(list){
   st.allMusicians = list || [];
   var savedName = null;
-  try{ savedName = localStorage.getItem("paw_volName"); }catch(e){ console.warn("localStorage read failed", e); }
+  try{ savedName = localStorage.getItem("APP_CONFIG.storagePrefix+"volName"Name"); }catch(e){ console.warn("localStorage read failed", e); }
   if(savedName){
     var match = st.allMusicians.find(function(m){return m.name===savedName;});
     if(match){
@@ -624,7 +632,7 @@ function pickVol(idx){
   hideSug();
   document.getElementById("sinp").blur();
   showLoading();
-  try{localStorage.setItem("paw_volName",v.name);}catch(e){console.warn("localStorage set failed",e);}
+  try{localStorage.setItem("APP_CONFIG.storagePrefix+"volName"Name",v.name);}catch(e){console.warn("localStorage set failed",e);}
   google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getMusicianSchedule(v.name);
 }
 
@@ -881,7 +889,7 @@ function buildRingkasanUI(data){
   h+='<div id="ring-table-wrap" style="background:#0a0c10;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">';
 
   h+='<div style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08);background:#12151c">'+
-    '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0f0f5">PAW</span>'+
+    '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0f0f5">'+esc(APP_CONFIG.ringkasanBrand)+'</span>'+
     '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.01em;color:#e8b84b;margin-left:10px">'+BLN_L[st.ringMonth].toUpperCase()+' '+st.ringYear+'</span>'+
   '</div>';
 
@@ -1046,7 +1054,7 @@ function chMonth(d){
 function scrollToDate(iso){var pre="card-"+iso.replace(/-/g,"_")+"_";var cards=document.querySelectorAll(".ecard");for(var i=0;i<cards.length;i++){if(cards[i].id.indexOf(pre)===0){var top=cards[i].getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:top,behavior:"smooth"});return;}}}
 
 function clearSrch(){
-  try{localStorage.removeItem("paw_volName");}catch(e){console.warn("localStorage remove failed",e);}
+  try{localStorage.removeItem("APP_CONFIG.storagePrefix+"volName"Name");}catch(e){console.warn("localStorage remove failed",e);}
   document.getElementById("sinp").value="";
   hideSug();
   st.vol=null;
