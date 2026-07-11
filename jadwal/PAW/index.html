@@ -406,7 +406,9 @@ var API_PARAM_MAP = {
   saveServiceRoster: ['dateStr','service','time','dayName','rosterJson','isSpecial'],
   deleteService: ['dateStr','service','time'],
   saveNote: ['idx','tanggal','judul','isi','oleh'],
-  deleteNote: ['idx']
+  deleteNote: ['idx'],
+  getPublicMonthData: ['year','month'],
+        
 };
 var API_WRITE_ACTIONS = ['submitFeedback','saveServiceRoster','deleteService','saveNote','deleteNote'];
 
@@ -824,7 +826,7 @@ function renderRingkasan(){
       try{buildRingkasanUI(data);}catch(err){console.error("buildRingkasanUI error:",err);showErr("Error: "+err.message);}
     })
     .withFailureHandler(function(e){showErr(e.message);})
-    .getAdminData(st.ringYear,st.ringMonth);
+    .getPublicMonthData(st.ringYear,st.ringMonth);
   requestAnimationFrame(function(){
     document.getElementById("content").classList.add("ready");
   });
