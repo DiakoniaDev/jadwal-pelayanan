@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'paw-admin-cache-';
-const CACHE_NAME = CACHE_PREFIX + 'v3';
+const CACHE_NAME = CACHE_PREFIX + 'v4';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

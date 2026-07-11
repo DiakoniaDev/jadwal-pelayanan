@@ -525,7 +525,7 @@ var API_PARAM_MAP = {
 // the key sent but must NOT have it overwritten by the stored ADMIN_KEY var.
 // All of these go over POST so the key never sits in a URL query string or
 // server log, even for the "read" (getAdminData).
-var API_KEY_REQUIRED = ['verifyKey','getAdminData','saveServiceRoster','deleteService','saveNote','deleteNote'];
+var API_KEY_REQUIRED = ['verifyKey','getAdminData','saveServiceRoster','deleteService','saveNote','deleteNote','setMonthStatus'];
 
 // Access key held only in sessionStorage (cleared when the tab closes).
 // It is attached to every gated request; the Apps Script backend (ADMIN_KEY
@@ -1032,7 +1032,7 @@ function renderInputRow(role,idx,sel){
   if(role==="Soundman")h+='<button class="rs-remove-btn" onclick="removeSoundman('+idx+')">×</button>';
   h+='</div>';
   var _sub=(st.subState&&st.subState[role]&&st.subState[role][idx])||"";
-  if(_sub)h+='<div class="rs-sub-hint" id="rs-subhint-'+sr+'-'+idx+'">&#8618; digantikan oleh <b>'+esc(_sub)+'</b> (menggantikan)</div>';
+  if(_sub)h+='<div class="rs-sub-hint" id="rs-subhint-'+sr+'-'+idx+'">&#8618; digantikan oleh <b>'+esc(_sub)+'</b> <button type="button" onclick="clearSub(\''+escQ(role)+'\','+idx+')" title="Batalkan pergantian" style="margin-left:6px;border:none;background:none;color:#ff6b7a;font-size:13px;cursor:pointer;padding:0 4px">&times;</button></div>';
   return h;
 }
 
@@ -1130,19 +1130,54 @@ function clearSubHint_(role,idx){
 
 function pickDd(role,idx,name){
   if(!st.rosterState[role])st.rosterState[role]=[""];
-  st.rosterState[role][idx]=name;
-  clearSubHint_(role,idx);
+  if(!st.subState[role])st.subState[role]=[];
+  var subChanged=applyPick_(role,idx,name);
   st.dirty=true;updateSaveBtn();
-  var sr=safeId(role);
-  var inp=document.querySelector('#rs-dd-'+sr+'-'+idx+' .rs-dd-input');
-  if(inp){
-    inp.value=name;
-    inp.readOnly=true;
-    inp.placeholder="— Belum dipilih —";
-    inp.classList.toggle("warn-select",isOverLimit(name));
-  }
   closeAllDd();
-  updateWarnBox();
+  if(subChanged){
+    renderRosterPage(); // re-render so the "digantikan" hint appears/updates
+  } else {
+    var sr=safeId(role);
+    var cur=st.rosterState[role][idx]||"";
+    var inp=document.querySelector('#rs-dd-'+sr+'-'+idx+' .rs-dd-input');
+    if(inp){
+      inp.value=cur;
+      inp.readOnly=true;
+      inp.placeholder="— Belum dipilih —";
+      inp.classList.toggle("warn-select",isOverLimit(cur));
+    }
+    updateWarnBox();
+  }
+}
+
+// True unless the current month is explicitly CLOSE.
+function isMonthOpen(){ return !(st.data && st.data.monthStatus==="CLOSE"); }
+
+// Status-aware pick. OPEN month: changing a filled slot to a different person
+// records a substitution (original kept in the dropdown, new person becomes
+// the "digantikan" pengganti); re-picking the original clears it. CLOSE month:
+// picks overwrite directly (no substitution). Returns true if the substitute
+// (hint) state changed, so pickDd knows to re-render the row.
+function applyPick_(role,idx,name){
+  name=(name||"").trim();
+  if(!st.rosterState[role])st.rosterState[role]=[""];
+  if(!st.subState[role])st.subState[role]=[];
+  var orig=(st.rosterState[role][idx]||"").trim();
+  var hadSub=!!((st.subState[role][idx]||"").trim());
+  if(isMonthOpen()){
+    if(!orig){ st.rosterState[role][idx]=name; st.subState[role][idx]=""; return hadSub; }
+    if(name===orig){ st.subState[role][idx]=""; return hadSub; }   // revert → clear sub
+    st.subState[role][idx]=name; return true;                       // substitute
+  }
+  st.rosterState[role][idx]=name; st.subState[role][idx]="";        // CLOSE: overwrite
+  return hadSub;
+}
+
+// Explicitly clear a substitution (the × on the digantikan hint).
+function clearSub(role,idx){
+  if(st.subState&&st.subState[role])st.subState[role][idx]="";
+  st.dirty=true;updateSaveBtn();
+  renderRosterPage();
 }
 
 function closeAllDd(){
@@ -1420,12 +1455,20 @@ function saveRoster(){
   if(!st.currentSlot)return;
   var btn=document.getElementById("rp-save");btn.disabled=true;btn.textContent="Menyimpan…";
   var clean={};
-  PAW_ROLES.forEach(function(role){var names=(st.rosterState[role]||[]).filter(function(n){return n&&n.trim();});if(names.length)clean[role]=names;});
+  PAW_ROLES.forEach(function(role){
+    var arr=[];
+    (st.rosterState[role]||[]).forEach(function(name,i){
+      name=(name||"").trim(); if(!name)return;
+      var sub=((st.subState[role]||[])[i]||"").trim();
+      arr.push(sub?{name:name,sub:sub}:name); // {name,sub} when substituted, else plain name
+    });
+    if(arr.length)clean[role]=arr;
+  });
   var slot=st.currentSlot;
   google.script.run
     .withSuccessHandler(function(res){
       btn.disabled=false;btn.textContent="Simpan Jadwal ✓";
-      if(res.ok){st.dirty=false;updateSaveBtn();showToast(res.msg,"ok");slot.slots={};Object.keys(clean).forEach(function(r){slot.slots[r]=clean[r].map(function(n){return{name:n};});});closeRoster();renderJadwal();scrollToSavedCard(slot.key);}   
+      if(res.ok){st.dirty=false;updateSaveBtn();showToast(res.msg,"ok");slot.slots={};Object.keys(clean).forEach(function(r){slot.slots[r]=clean[r].map(function(e){return (e&&typeof e==="object")?{name:e.name,sub:e.sub||""}:{name:e,sub:""};});});closeRoster();renderJadwal();scrollToSavedCard(slot.key);}
       else showToast(res.msg||"Gagal menyimpan.","err");
     })
     .withFailureHandler(function(e){btn.disabled=false;btn.textContent="Simpan Jadwal ✓";showToast("Error: "+e.message,"err");})
