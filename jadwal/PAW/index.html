@@ -644,7 +644,8 @@ function gotEvents(resp){
   var events = (resp && resp.events) ? resp.events : (resp || []);
   if (resp && resp.rosters) st.rosterCache = resp.rosters; // cards open with no server call
   st.allEvents=events;var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
-
+}
+        
 /* ── JADWAL TAB ── */
 function renderJadwal(){
   if(!st.vol){document.getElementById("content").innerHTML=homeHTML();return;}
