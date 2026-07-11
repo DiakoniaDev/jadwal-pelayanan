@@ -386,14 +386,14 @@ table.ring-tbl{border-collapse:collapse;min-width:100%;font-size:12px}
 .lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:#0a0c10;transition:opacity .35s ease}
 .lock.hide{opacity:0;pointer-events:none}
 .lock-card{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;text-align:center}
-.lock-ring{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:rgba(245,158,11,.12);border:1.5px solid rgba(245,158,11,.3);color:#f59e0b;margin-bottom:20px}
+.lock-ring{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:rgba(232,184,75,.12);border:1.5px solid rgba(232,184,75,.3);color:#e8b84b;margin-bottom:20px}
 .lock-title{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#fff;letter-spacing:-.02em}
 .lock-sub{font-family:'DM Sans',sans-serif;font-size:13px;color:#8890aa;margin-top:6px;margin-bottom:24px}
 .lock-form{width:100%;display:flex;flex-direction:column;gap:12px}
 .lock-input{width:100%;padding:14px 16px;border-radius:14px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;font-family:'DM Sans',sans-serif;font-size:16px;text-align:center;letter-spacing:.05em;outline:none;transition:border-color .15s}
-.lock-input:focus{border-color:rgba(245,158,11,.55)}
+.lock-input:focus{border-color:rgba(232,184,75,.55)}
 .lock-input::placeholder{color:#4a5168;letter-spacing:0}
-.lock-btn{width:100%;padding:14px;border-radius:14px;border:none;background:#f59e0b;color:#0a0c10;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:opacity .15s,transform .1s}
+.lock-btn{width:100%;padding:14px;border-radius:14px;border:none;background:#e8b84b;color:#0a0c10;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:opacity .15s,transform .1s}
 .lock-btn:active{transform:scale(.98)}
 .lock-btn:disabled{opacity:.5;cursor:default}
 .lock-err{font-family:'DM Sans',sans-serif;font-size:13px;color:#ff6b7a;min-height:18px;transition:opacity .15s}
@@ -412,10 +412,10 @@ table.ring-tbl{border-collapse:collapse;min-width:100%;font-size:12px}
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     </div>
     <div class="lock-title">Admin PAW</div>
-    <div class="lock-sub">Masukkan kunci akses untuk melanjutkan</div>
+    <div class="lock-sub">Masukkan password untuk melanjutkan</div>
     <form class="lock-form" id="lock-form" onsubmit="return submitKey(event)">
       <input class="lock-input" id="lock-input" type="password" inputmode="text"
-             autocomplete="current-password" placeholder="Kunci akses" aria-label="Kunci akses">
+             autocomplete="current-password" placeholder="Password" aria-label="Password">
       <div class="lock-err" id="lock-err"></div>
       <button class="lock-btn" id="lock-btn" type="submit">Masuk</button>
     </form>
@@ -573,7 +573,7 @@ function callApi(action, args){
 function handleAuth(data){
   if (data && data.error && String(data.error).toLowerCase() === 'unauthorized'){
     setAdminKey("");
-    if (typeof showLock === 'function') showLock('Sesi berakhir. Masukkan kunci lagi.');
+    if (typeof showLock === 'function') showLock('Sesi berakhir. Masukkan password lagi.');
   }
   return data;
 }
@@ -602,7 +602,7 @@ function submitKey(ev){
   var inp = document.getElementById('lock-input');
   var err = document.getElementById('lock-err');
   var key = inp ? inp.value.trim() : '';
-  if (!key){ if(err) err.textContent='Kunci tidak boleh kosong.'; return false; }
+  if (!key){ if(err) err.textContent='Password tidak boleh kosong.'; return false; }
   if (err) err.textContent='';
   setLockBusy(true);
   callApi('verifyKey', [key]).then(function(data){
@@ -610,9 +610,10 @@ function submitKey(ev){
     if (data && data.ok){
       setAdminKey(key);
       hideLock();
+      loadData(); // key is valid now — (re)load the admin data it gates
     } else {
       setAdminKey('');
-      if (err) err.textContent = (data && data.message) || 'Kunci salah.';
+      if (err) err.textContent = (data && data.message) || 'Password salah.';
       if (inp){ inp.value=''; inp.focus(); }
     }
   }).catch(function(e){
@@ -690,7 +691,7 @@ function serviceLabel(s){var map={"Ibadah 123":"Umum"};return map[s]||s;}
 
 var st={tab:"jadwal",year:0,month:0,data:null,slots:[],currentSlot:null,rosterState:{},loaded:false,dirty:false};
 
-(function(){var now=new Date();st.year=now.getFullYear();st.month=now.getMonth();loadData();})();
+(function(){var now=new Date();st.year=now.getFullYear();st.month=now.getMonth();if(ADMIN_KEY)loadData();})();
 
 function loadData(){
   document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat data bulan ini…</div></div>';
