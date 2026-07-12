@@ -415,6 +415,30 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .ring-save-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:13px;border:none;background:#e8b84b;color:#0a0c10;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:48px;transition:opacity .2s}
 .ring-save-btn:active{opacity:.85}
 
+/* ── KETERSEDIAAN (VOLUNTEER) ── */
+.av-wrap{animation:fadeUp .3s cubic-bezier(.22,1,.36,1)}
+.av-vol-line{font-size:14px;color:#8890aa;margin:8px 0 14px}
+.av-vol-line b{color:#e8b84b;font-weight:600}
+.av-month-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.av-month-pill{padding:8px 15px;border-radius:20px;border:1.5px solid rgba(255,255,255,.13);background:#12151c;color:#8890aa;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.av-month-pill.on{background:rgba(232,184,75,.15);border-color:#e8b84b;color:#e8b84b}
+.av-month-single{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#e8b84b;margin-bottom:16px;letter-spacing:-.01em}
+.av-hint{font-size:13px;color:#8890aa;line-height:1.6;margin-bottom:14px;text-align:center;background:#12151c;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px 14px}
+.av-hint b{font-weight:700}
+.av-cal{background:#12151c;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px 12px 12px;margin-bottom:18px}
+.av-cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px}
+.av-cal-dow{text-align:center;font-size:12px;font-weight:700;color:#e8b84b}
+.av-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.av-cell{min-height:42px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:15px;font-weight:600}
+.av-cell.pad{visibility:hidden}
+.av-cell.off{color:#2d3342}
+.av-cell.svc{color:#f0f0f5;background:rgba(255,255,255,.05);cursor:pointer;border:1.5px solid rgba(255,255,255,.08);transition:transform .1s,background .12s,border-color .12s}
+.av-cell.svc:active{transform:scale(.88)}
+.av-cell.blk{background:rgba(248,113,113,.9);color:#fff;border-color:rgba(248,113,113,.9)}
+.av-save-btn{width:100%;padding:14px;border-radius:13px;border:none;background:#333744;color:#666a7a;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:default;margin-bottom:40px;transition:background .25s,color .25s}
+.av-save-btn.dirty{background:#e8b84b;color:#0a0c10;cursor:pointer}
+.av-save-btn.dirty:active{opacity:.85;transform:scale(.98)}
+
 /* ── STATES ───────────────── */
 .empty{text-align:center;padding:40px 0;animation:emptyPop .32s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes emptyPop{
@@ -446,6 +470,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
   </div>
   <nav class="dr-nav">
     <div class="dr-item on" id="dn-jadwal" onclick="navTo('jadwal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</div>
+    <div class="dr-item" id="dn-ketersediaan" style="display:none" onclick="navTo('ketersediaan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 15 11 17 15 13"/></svg>Ketersediaan</div>
     <div class="dr-item" id="dn-ringkasan" onclick="navTo('ringkasan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Ringkasan</div>
     <div class="dr-item" id="dn-catatan" onclick="navTo('catatan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Catatan</div>
     <div class="dr-item" id="dn-masukan" onclick="navTo('masukan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Kritik &amp; Saran</div>
@@ -483,20 +508,21 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 var EXEC_URL = "https://script.google.com/macros/s/AKfycbyRFSxg1KEJelSsBMs4rBBf6-h0G1jiWF04TsITRzFhkvGd-sIhLbjlaB3K3HgkghIA/exec"; // e.g. https://script.google.com/macros/s/AKfycb.../exec
 
 var API_PARAM_MAP = {
-  getConfig: [], getAllMusicians: [], getNotes: [],
-  searchMusicians: ['query'],
-  getMusicianSchedule: ['name'],
-  getServiceRoster: ['date','service'],
-  getAdminData: ['year','month'],
-  submitFeedback: ['nama','pesan'],
-  saveServiceRoster: ['dateStr','service','time','dayName','rosterJson','isSpecial'],
-  deleteService: ['dateStr','service','time'],
-  saveNote: ['idx','tanggal','judul','isi','oleh'],
-  deleteNote: ['idx'],
-  getPublicMonthData: ['year','month'],
-        
+  getConfig: [], getAllVolunteers: [], getNotes: ['dept'],
+  searchVolunteers: ['query'],
+  getVolunteerSchedule: ['name'],
+  getServiceRoster: ['date','service','dept'],
+  submitFeedback: ['dept','nama','pesan'],
+  getPublicMonthData: ['year','month','dept'],
+  getOpenAvailabilityMonths: ['dept'],
+  getMyAvailability: ['name','dept','year','month'],
+  saveMyAvailability: ['name','dept','year','month','days'],
+  getSonglist: ['date','service'],
+  getDresscode: ['date','service'],
+  getMySelfie: ['name','date','service'],
+  uploadSelfie: ['name','date','service','imageData','mimeType']
 };
-var API_WRITE_ACTIONS = ['submitFeedback','saveServiceRoster','deleteService','saveNote','deleteNote'];
+var API_WRITE_ACTIONS = ['submitFeedback','saveMyAvailability','uploadSelfie'];
 
 function callApi(action, args){
   var names = API_PARAM_MAP[action] || [];
@@ -620,7 +646,9 @@ function rowTint(role){
 var st={
   mainTab:"jadwal",
   vol:null,allEvents:[],schedTab:"jadwal",viewYear:0,viewMonth:0,monthDir:1,openKey:null,rosterCache:{},query:"",debounce:null,sugList:[],justPicked:false,
-  ringYear:0,ringMonth:0,ringCache:{}
+  ringYear:0,ringMonth:0,ringCache:{},
+  availOpenMonths:[],availSelYear:0,availSelMonth:0,availBlocked:{},availDirty:false,
+  rolesByDept:{},structureByDept:{}
 };
 
 (function(){var now=new Date();st.ringYear=now.getFullYear();st.ringMonth=now.getMonth();})();
@@ -631,8 +659,8 @@ google.script.run.withSuccessHandler(function(c){
   document.getElementById("hdr-l2").textContent=APP_CONFIG.deptLabel;
   document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
   document.getElementById("dr-church").textContent=church;
-  if(c.rosterStructure)ROST=c.rosterStructure;
-  if(c.pawRoles)PAW_ROLES=c.pawRoles;
+  st.rolesByDept=c.rolesByDept||{};
+  st.structureByDept=c.structureByDept||{};
 if(c.logoUrl){
   ["hdr-logo-img","dr-logo"].forEach(function(id){
     var el=document.getElementById(id);
@@ -657,19 +685,20 @@ google.script.run.withSuccessHandler(function(list){
       document.getElementById("sinp").value = match.name;
       document.getElementById("sbtn").style.display = "flex";
       showLoading();
-      google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getMusicianSchedule(match.name);
+      google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getVolunteerSchedule(match.name);
     }
   }
-}).getAllMusicians();
+}).getAllVolunteers();
 
 function openDr(){document.getElementById("dr").classList.add("on");document.getElementById("ov").classList.add("on");}
 function closeDr(){document.getElementById("dr").classList.remove("on");document.getElementById("ov").classList.remove("on");}
 
 function navTo(tab){
   st.mainTab=tab;closeDr();
-  ["jadwal","ringkasan","catatan","masukan"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
+  ["jadwal","ketersediaan","ringkasan","catatan","masukan"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
   document.getElementById("srch-wrap").style.display=tab==="jadwal"?"block":"none";
   if(tab==="jadwal")renderJadwal();
+  else if(tab==="ketersediaan")renderKetersediaan();
   else if(tab==="ringkasan")renderRingkasan();
   else if(tab==="catatan")renderCatatan();
   else renderMasukan();
@@ -696,7 +725,7 @@ function doSearch(q){
     google.script.run.withSuccessHandler(function(list){
       if(st.vol || document.getElementById("sinp").value.trim()!==q) return;
       showSug(list);
-    }).searchMusicians(q);
+    }).searchVolunteers(q);
     return;
   }
   var ql=q.toLowerCase();
@@ -723,15 +752,29 @@ function pickVol(idx){
   document.getElementById("sinp").blur();
   showLoading();
   try{localStorage.setItem(APP_CONFIG.storagePrefix + "volName", v.name);}catch(e){console.warn("localStorage set failed",e);}
-  google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getMusicianSchedule(v.name);
+  google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getVolunteerSchedule(v.name);
+}
+
+// Fetches the dept-scoped availability-open-months list and shows/hides the
+// Ketersediaan sidebar item. Called once dept is known (after gotEvents).
+function refreshAvailNav_(dept){
+  google.script.run.withSuccessHandler(function(months){
+    st.availOpenMonths=months||[];
+    toggleAvailNav();
+  }).getOpenAvailabilityMonths(dept);
 }
 
 function gotEvents(resp){
   var events = (resp && resp.events) ? resp.events : (resp || []);
   if (resp && resp.rosters) st.rosterCache = resp.rosters;
+  if (resp && resp.dept && st.vol) st.vol.dept = resp.dept;
+  var dept = st.vol && st.vol.dept;
+  if (dept && st.structureByDept[dept]) ROST = st.structureByDept[dept];
+  if (dept && st.rolesByDept[dept]) PAW_ROLES = st.rolesByDept[dept];
   st.allEvents=events;var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
-  renderJadwal();   
-}                    
+  refreshAvailNav_(dept);
+  renderJadwal();
+}
         
 /* ── JADWAL TAB ── */
 function renderJadwal(){
@@ -841,7 +884,7 @@ function toggleCard(key,myName){
           setRosterHTML(document.getElementById("ri-"+kid),'<div style="color:#f87171;font-size:13px;text-align:center;padding:6px">Gagal memuat: '+esc(e.message)+'</div>');
           growRoster(kid);
         })
-        .getServiceRoster(key.substring(0,pipe),key.substring(pipe+1));
+        .getServiceRoster(key.substring(0,pipe),key.substring(pipe+1),st.vol&&st.vol.dept);
     }
   } else {
     if(rosterEl)rosterEl.style.maxHeight="0px";
@@ -897,9 +940,124 @@ function fillRoster(elId,data,myName){
   setRosterHTML(el,h);
 }
 
+/* ── KETERSEDIAAN (VOLUNTEER) ── */
+function toggleAvailNav(){
+  var el=document.getElementById("dn-ketersediaan");
+  if(el)el.style.display=(st.availOpenMonths&&st.availOpenMonths.length)?"flex":"none";
+}
+
+function renderKetersediaan(){
+  var content=document.getElementById("content");
+  content.classList.add("ready");
+  if(!st.vol){
+    content.innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk mengatur ketersediaan.</div></div>';
+    return;
+  }
+  content.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat ketersediaan…</div></div>';
+  google.script.run
+    .withSuccessHandler(function(months){
+      st.availOpenMonths=months||[];
+      toggleAvailNav();
+      if(!st.availOpenMonths.length){
+        content.innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div><div class="empty-msg">Belum ada bulan yang dibuka untuk ketersediaan.</div></div>';
+        return;
+      }
+      var sel=st.availOpenMonths.find(function(m){return m.year===st.availSelYear&&m.month===st.availSelMonth;});
+      if(!sel){sel=st.availOpenMonths[0];st.availSelYear=sel.year;st.availSelMonth=sel.month;}
+      loadMyAvailability();
+    })
+    .withFailureHandler(function(e){showErr(e.message);})
+    .getOpenAvailabilityMonths(st.vol.dept);
+}
+
+function loadMyAvailability(){
+  google.script.run
+    .withSuccessHandler(function(res){
+      var days=(res&&res.days)||[];
+      st.availBlocked={};days.forEach(function(d){st.availBlocked[d]=true;});
+      st.availDirty=false;
+      buildKetersediaanUI();
+    })
+    .withFailureHandler(function(e){showErr(e.message);})
+    .getMyAvailability(st.vol.name,st.vol.dept,st.availSelYear,st.availSelMonth);
+}
+
+function buildKetersediaanUI(){
+  var y=st.availSelYear,m=st.availSelMonth;
+  var h='<div class="av-wrap">';
+  h+='<div class="av-vol-line">Ketersediaan untuk <b>'+esc(st.vol.name)+'</b></div>';
+  if(st.availOpenMonths.length>1){
+    h+='<div class="av-month-pills">';
+    st.availOpenMonths.forEach(function(mo){
+      var on=mo.year===y&&mo.month===m;
+      h+='<button class="av-month-pill'+(on?' on':'')+'" onclick="selectAvailMonth('+mo.year+','+mo.month+')">'+esc(mo.label)+'</button>';
+    });
+    h+='</div>';
+  } else {
+    h+='<div class="av-month-single">'+BLN_L[m]+' '+y+'</div>';
+  }
+  h+='<div class="av-hint">Ketuk tanggal Sabtu/Minggu yang <b style="color:#f87171">TIDAK bisa</b> kamu layani. Merah = blokir.</div>';
+  h+=buildAvailCal(y,m);
+  h+='<button class="av-save-btn'+(st.availDirty?' dirty':'')+'" id="av-save" onclick="saveAvail()"'+(st.availDirty?'':' disabled')+'>Simpan Ketersediaan ✓</button>';
+  h+='</div>';
+  document.getElementById("content").innerHTML=h;
+}
+
+function buildAvailCal(year,mon){
+  var fd=new Date(year,mon,1).getDay(),days=new Date(year,mon+1,0).getDate();
+  var h='<div class="av-cal"><div class="av-cal-dow-row">';
+  DOW.forEach(function(l){h+='<div class="av-cal-dow">'+l+'</div>';});
+  h+='</div><div class="av-cal-grid">';
+  for(var i=0;i<fd;i++)h+='<div class="av-cell pad"></div>';
+  for(var d=1;d<=days;d++){
+    var dow=new Date(year,mon,d).getDay();
+    if(dow!==0&&dow!==6){h+='<div class="av-cell off">'+d+'</div>';continue;}
+    var blk=!!st.availBlocked[d];
+    h+='<div class="av-cell svc'+(blk?' blk':'')+'" onclick="toggleBlock('+d+')">'+d+'</div>';
+  }
+  h+='</div></div>';
+  return h;
+}
+
+function toggleBlock(day){
+  if(st.availBlocked[day])delete st.availBlocked[day];
+  else st.availBlocked[day]=true;
+  st.availDirty=true;
+  buildKetersediaanUI();
+}
+
+function selectAvailMonth(y,m){
+  if(st.availDirty&&!confirm("Ada perubahan belum disimpan. Pindah bulan tanpa simpan?"))return;
+  st.availSelYear=y;st.availSelMonth=m;
+  loadMyAvailability();
+}
+
+function saveAvail(){
+  var btn=document.getElementById("av-save");
+  if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
+  var days=Object.keys(st.availBlocked).map(function(x){return parseInt(x);}).filter(function(x){return !isNaN(x);}).sort(function(a,b){return a-b;});
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res&&res.ok){
+        st.availDirty=false;
+        buildKetersediaanUI();
+        var b=document.getElementById("av-save");if(b)b.textContent="Tersimpan ✓";
+      } else {
+        if(btn){btn.disabled=false;btn.textContent="Simpan Ketersediaan ✓";}
+        alert((res&&res.msg)||"Gagal menyimpan.");
+      }
+    })
+    .withFailureHandler(function(e){
+      if(btn){btn.disabled=false;btn.textContent="Simpan Ketersediaan ✓";}
+      alert("Gagal: "+e.message);
+    })
+    .saveMyAvailability(st.vol.name,st.vol.dept,st.availSelYear,st.availSelMonth,days.join(","));
+}
+
 /* ── RINGKASAN TAB ── */
 function renderRingkasan(){
-  var cacheKey=mKey(st.ringYear,st.ringMonth);
+  if(!st.vol){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk melihat ringkasan.</div></div>';return;}
+  var cacheKey=st.vol.dept+"|"+mKey(st.ringYear,st.ringMonth);
   if(st.ringCache[cacheKey]){
     try{buildRingkasanUI(st.ringCache[cacheKey]);}catch(err){console.error("buildRingkasanUI error:",err);showErr("Error: "+err.message);}
     return;
@@ -911,7 +1069,7 @@ function renderRingkasan(){
       try{buildRingkasanUI(data);}catch(err){console.error("buildRingkasanUI error:",err);showErr("Error: "+err.message);}
     })
     .withFailureHandler(function(e){showErr(e.message);})
-    .getPublicMonthData(st.ringYear,st.ringMonth);
+    .getPublicMonthData(st.ringYear,st.ringMonth,st.vol.dept);
   requestAnimationFrame(function(){
     document.getElementById("content").classList.add("ready");
   });
@@ -926,7 +1084,7 @@ function chRingMonth(dir){
  
 function buildRingkasanUI(data){
   var services=data.services||[];
-  var roles=data.pawRoles||PAW_ROLES;
+  var roles=data.roles||PAW_ROLES;
 
   var groupMap={};
   var groups=data.groups||{};
@@ -1105,6 +1263,7 @@ function saveRingkasanAsImage(){
 
 /* ── CATATAN ── */
 function renderCatatan(){
+  if(!st.vol){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk melihat catatan.</div></div>';return;}
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat catatan…</div></div>';
   google.script.run.withSuccessHandler(function(notes){
     if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';return;}
@@ -1113,13 +1272,13 @@ function renderCatatan(){
     requestAnimationFrame(function(){
       document.getElementById("content").classList.add("ready");
     });
-  }).withFailureHandler(function(e){showErr(e.message);}).getNotes();
+  }).withFailureHandler(function(e){showErr(e.message);}).getNotes(st.vol.dept);
 }
 
 /* ── MASUKAN ── */
 function renderMasukan(){
   var pre=st.vol?st.vol.name:"";
-  document.getElementById("content").innerHTML='<div class="fb-wrap"><div class="fb-title">Kritik &amp; Saran</div><div class="fb-sub">Masukan kamu sangat berarti untuk kemajuan tim PAW. 🙏</div><div class="form-g"><label class="form-lbl">Nama</label><input class="form-inp" id="fb-n" type="text" placeholder="Nama kamu…" value="'+esc(pre)+'"></div><div class="form-g"><label class="form-lbl">Pesan</label><textarea class="form-inp" id="fb-p" placeholder="Tulis kritik atau saranmu di sini…"></textarea></div><button class="sub-btn" id="fb-btn" onclick="kirimMasukan()">Kirim Masukan</button></div>';
+  document.getElementById("content").innerHTML='<div class="fb-wrap"><div class="fb-title">Kritik &amp; Saran</div><div class="fb-sub">Masukan kamu sangat berarti untuk kemajuan tim. 🙏</div><div class="form-g"><label class="form-lbl">Nama</label><input class="form-inp" id="fb-n" type="text" placeholder="Nama kamu…" value="'+esc(pre)+'"></div><div class="form-g"><label class="form-lbl">Pesan</label><textarea class="form-inp" id="fb-p" placeholder="Tulis kritik atau saranmu di sini…"></textarea></div><button class="sub-btn" id="fb-btn" onclick="kirimMasukan()">Kirim Masukan</button></div>';
   requestAnimationFrame(function(){
     document.getElementById("content").classList.add("ready");
   });
@@ -1127,7 +1286,7 @@ function renderMasukan(){
 function kirimMasukan(){
   var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){alert("Pesan tidak boleh kosong.");return;}
   var btn=document.getElementById("fb-btn");btn.disabled=true;btn.textContent="Mengirim…";
-  google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico">🙏</div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(n,p);
+  google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico">🙏</div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(st.vol&&st.vol.dept,n,p);
 }
 
 /* ── HELPERS ── */
@@ -1152,6 +1311,8 @@ function clearSrch(){
   st.rosterCache={};
   st.query="";
   st.sugList=[];
+  st.availOpenMonths=[];
+  toggleAvailNav();
   document.getElementById("content").innerHTML=homeHTML();
   document.getElementById("content").classList.add("ready");
 }
