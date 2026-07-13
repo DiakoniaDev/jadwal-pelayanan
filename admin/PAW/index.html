@@ -582,6 +582,13 @@ function setAdminDept(d){ ADMIN_DEPT = d || ""; if (d) sessionStorage.setItem('g
 
 function callApi(action, args){
   var names = API_PARAM_MAP[action] || [];
+  args = Array.prototype.slice.call(args || []);
+  // The param map lists 'dept' as the FIRST param for dept-scoped actions, but
+  // the existing call sites pass positional args WITHOUT a leading dept (e.g.
+  // getAdminData(year, month)). So for any action whose first param is 'dept'
+  // — except verifyKey, which passes [dept,key] explicitly — prepend the stored
+  // ADMIN_DEPT so the positional mapping lines up correctly.
+  if (names[0] === 'dept' && action !== 'verifyKey') args.unshift(ADMIN_DEPT);
   var params = {action: action};
   names.forEach(function(name, i){
     var val = args[i];
@@ -591,8 +598,7 @@ function callApi(action, args){
   // verifyKey already carries the freshly-typed key+dept via its own params;
   // don't clobber those with the stored values.
   if (isKeyed && action !== 'verifyKey') params.key = ADMIN_KEY;
-  // Any call that declares a 'dept' param but didn't get one passed gets the
-  // stored admin dept auto-filled, so individual call sites don't each repeat it.
+  // Safety net: if a dept param is still somehow empty, fill it from storage.
   if (names.indexOf('dept') !== -1 && (params.dept === undefined || params.dept === "")) params.dept = ADMIN_DEPT;
 
   if (isKeyed){
