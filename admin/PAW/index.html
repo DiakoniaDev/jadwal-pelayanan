@@ -376,6 +376,28 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .dc-save-btn{width:100%;padding:12px;border-radius:11px;border:none;background:#333744;color:#666a7a;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:default;transition:background .2s,color .2s}
 .dc-save-btn.dirty{background:#e8b84b;color:#0a0c10;cursor:pointer}
 .dc-loading{font-size:13px;color:#8890aa;padding:8px 0}
+.sq-wrap{padding-bottom:40px}
+.sq-filter{display:flex;gap:6px;margin-bottom:16px}
+.sq-fbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#12151c;color:#8890aa;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.sq-fbtn.on{background:#222737;color:#f0f0f5;border-color:rgba(232,184,75,.4)}
+.sq-grid{display:flex;flex-direction:column;gap:14px}
+.sq-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+.sq-card.approved{border-color:rgba(74,222,128,.35)}
+.sq-card.rejected{border-color:rgba(248,113,113,.35)}
+.sq-img{width:100%;max-height:340px;object-fit:contain;background:#000;display:block;cursor:zoom-in}
+.sq-body{padding:13px 15px}
+.sq-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#f0f0f5}
+.sq-meta{font-size:12px;color:#8890aa;margin-top:2px}
+.sq-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px}
+.sq-badge.pending{background:rgba(232,184,75,.16);color:#e8b84b}
+.sq-badge.approved{background:rgba(74,222,128,.16);color:#4ade80}
+.sq-badge.rejected{background:rgba(248,113,113,.16);color:#f87171}
+.sq-actions{display:flex;gap:8px;margin-top:12px}
+.sq-btn{flex:1;padding:10px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.sq-approve{background:#4ade80;color:#08210f}
+.sq-reject{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.35)}
+.sq-btn:disabled{opacity:.5;cursor:default}
+.sq-empty{text-align:center;padding:48px 16px;color:#8890aa;font-size:14px}
 .modal-ov{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-ov.on{opacity:1;pointer-events:all}
 .modal-box{position:fixed;left:50%;bottom:0;transform:translateX(-50%) translateY(100%);z-index:401;width:100%;max-width:480px;background:#12151c;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);padding:24px 24px calc(24px + env(safe-area-inset-bottom,0px));transition:transform .32s cubic-bezier(.22,1,.36,1)}
@@ -494,6 +516,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
     <div class="dr-item" id="dn-ringkasan" onclick="navTo('ringkasan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Ringkasan</div>
     <div class="dr-item" id="dn-catatan" onclick="navTo('catatan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Catatan</div>
     <div class="dr-item" id="dn-masukan" onclick="navTo('masukan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Kritik &amp; Saran</div>
+    <div class="dr-item" id="dn-selfie" style="display:none" onclick="navTo('selfie')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Approval Selfie</div>
     <div class="dr-item" id="dn-sheet" onclick="navTo('sheet')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Buka Sheet</div>
   </nav>
 </div>
@@ -710,6 +733,8 @@ function applyDeptLabels(){
   var h = document.getElementById('hdr-title'); if (h) h.textContent = t;
   var d = document.getElementById('dr-title');  if (d) d.textContent = t;
   var b = document.getElementById('hdr-dept-badge'); if (b) b.textContent = ADMIN_DEPT || "";
+  var selfieNav = document.getElementById('dn-selfie');
+  if (selfieNav) selfieNav.style.display = (ADMIN_DEPT === 'CM') ? 'flex' : 'none';
 }
 
 // Populate the login dept dropdown from getConfig (fixed list, no key needed).
@@ -797,7 +822,7 @@ function C(r){return RC[(r||"").toLowerCase()]||RC.soundman;}
 function roleLabel(r){var map={"Soundman":"Sound","Sequencer":"Seq"};return map[r]||r;}
 function serviceLabel(s){var map={"Ibadah 123":"Umum"};return map[s]||s;}
 
-var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false};
+var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending"};
 
 (function(){var now=new Date();st.year=now.getFullYear();st.month=now.getMonth();st.availYear=now.getFullYear();st.availMonth=now.getMonth();if(ADMIN_KEY&&ADMIN_DEPT)loadData();})();
 
@@ -852,11 +877,11 @@ function closeDr(){document.getElementById("dr").classList.remove("on");document
 
 function navTo(tab){
   st.tab=tab;closeDr();
-  ["jadwal","ringkasan","ketersediaan","catatan","masukan","sheet"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
+  ["jadwal","ringkasan","ketersediaan","catatan","masukan","selfie","sheet"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
   renderTab();
 }
 
-function renderTab(){if(!st.loaded)return;if(st.tab==="jadwal")renderJadwal();else if(st.tab==="ringkasan")renderRingkasan();else if(st.tab==="ketersediaan")renderKetersediaan();else if(st.tab==="catatan")renderCatatan();else if(st.tab==="masukan")renderMasukan();else renderSheet();}
+function renderTab(){if(!st.loaded)return;if(st.tab==="jadwal")renderJadwal();else if(st.tab==="ringkasan")renderRingkasan();else if(st.tab==="ketersediaan")renderKetersediaan();else if(st.tab==="catatan")renderCatatan();else if(st.tab==="masukan")renderMasukan();else if(st.tab==="selfie")renderSelfieQueue();else renderSheet();}
 
 function chMonth(dir){
   st.month+=dir;if(st.month>11){st.month=0;st.year++;}if(st.month<0){st.month=11;st.year--;}
@@ -1712,6 +1737,87 @@ function saveDresscode(){
     }
   }).catch(function(e){
     if(btn){btn.disabled=false;btn.classList.add("dirty");btn.textContent="Simpan Dresscode ✓";}
+    showToast("Gagal: "+(e.message||e),"err");
+  });
+}
+
+// ── CM SELFIE APPROVAL QUEUE ─────────────────────────────────
+function renderSelfieQueue(){
+  if(st.dept!=="CM"){document.getElementById("content").innerHTML='<div class="sq-empty">Halaman ini khusus departemen CM.</div>';return;}
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat selfie…</div></div>';
+  callApi('getSelfieQueue',[]).then(function(res){
+    st.selfieItems=(res&&res.items)||[];
+    buildSelfieQueue();
+  }).catch(function(e){
+    document.getElementById("content").innerHTML='<div class="sq-empty">Gagal memuat: '+esc(e.message||e)+'</div>';
+  });
+}
+
+function buildSelfieQueue(){
+  var items=st.selfieItems||[];
+  var filt=st.selfieFilter||"pending";
+  var counts={pending:0,approved:0,rejected:0};
+  items.forEach(function(it){counts[it.status]=(counts[it.status]||0)+1;});
+  var shown=items.filter(function(it){return it.status===filt;});
+
+  var h='<div class="sq-wrap">';
+  h+='<div class="sq-filter">'+
+    '<button class="sq-fbtn'+(filt==="pending"?" on":"")+'" onclick="setSelfieFilter(\'pending\')">Menunggu ('+counts.pending+')</button>'+
+    '<button class="sq-fbtn'+(filt==="approved"?" on":"")+'" onclick="setSelfieFilter(\'approved\')">Disetujui ('+counts.approved+')</button>'+
+    '<button class="sq-fbtn'+(filt==="rejected"?" on":"")+'" onclick="setSelfieFilter(\'rejected\')">Ditolak ('+counts.rejected+')</button>'+
+  '</div>';
+
+  if(!shown.length){
+    h+='<div class="sq-empty">Tidak ada selfie '+(filt==="pending"?"menunggu approval":filt==="approved"?"disetujui":"ditolak")+'.</div>';
+  } else {
+    h+='<div class="sq-grid">';
+    shown.forEach(function(it,i){
+      var d=new Date(it.date+"T00:00:00");
+      var dstr=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
+      var badge='<span class="sq-badge '+it.status+'">'+(it.status==="pending"?"⏳ Menunggu":it.status==="approved"?"✅ Disetujui"+(it.approvedBy?" · "+esc(it.approvedBy):""):"❌ Ditolak"+(it.approvedBy?" · "+esc(it.approvedBy):""))+'</span>';
+      var actions='';
+      {
+        actions='<div class="sq-actions">';
+        if(it.status!=="approved")actions+='<button class="sq-btn sq-approve" onclick="decideSelfie('+i+',\'approved\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Setujui</button>';
+        if(it.status!=="rejected")actions+='<button class="sq-btn sq-reject" onclick="decideSelfie('+i+',\'rejected\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Tolak</button>';
+        actions+='</div>';
+      }
+      h+='<div class="sq-card '+it.status+'" id="sq-card-'+i+'">'+
+        (it.url?'<img class="sq-img" src="'+encodeURI(it.url)+'" alt="selfie" onclick="window.open(this.src,\'_blank\')">':'')+
+        '<div class="sq-body">'+
+          '<div class="sq-name">'+esc(it.name)+'</div>'+
+          '<div class="sq-meta">'+esc(it.service)+' · '+esc(dstr)+'</div>'+
+          badge+actions+
+        '</div>'+
+      '</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  document.getElementById("content").innerHTML=h;
+}
+
+function setSelfieFilter(f){st.selfieFilter=f;buildSelfieQueue();}
+
+function decideSelfie(idx,decision){
+  var shown=(st.selfieItems||[]).filter(function(it){return it.status===(st.selfieFilter||"pending");});
+  var it=shown[idx]; if(!it)return;
+  var card=document.getElementById("sq-card-"+idx);
+  if(card){card.querySelectorAll(".sq-btn").forEach(function(b){b.disabled=true;});}
+  callApi('approveSelfie',[it.date,it.service,it.name,decision,ADMIN_DEPT]).then(function(res){
+    if(res&&res.ok){
+      // update the master list item's status
+      st.selfieItems.forEach(function(x){
+        if(x.date===it.date&&x.service===it.service&&x.name===it.name)x.status=decision;
+      });
+      showToast(decision==="approved"?"Selfie disetujui.":"Selfie ditolak.","ok");
+      buildSelfieQueue();
+    } else {
+      if(card){card.querySelectorAll(".sq-btn").forEach(function(b){b.disabled=false;});}
+      showToast((res&&res.msg)||"Gagal.","err");
+    }
+  }).catch(function(e){
+    if(card){card.querySelectorAll(".sq-btn").forEach(function(b){b.disabled=false;});}
     showToast("Gagal: "+(e.message||e),"err");
   });
 }
