@@ -122,19 +122,17 @@ input, textarea {
   60% { opacity:1; transform:translateY(4px) scaleY(1.02); }
   100%{ transform:translateY(0) scaleY(1); }
 }
-.hdr-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:0;}
-.menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-top:2px}
+.hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:0;}
+.menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-left:-8px}
 .menu-btn:active{background:rgba(255,255,255,.08)}
 .hdr-text{flex:1;min-width:0}
-.hdr-l1{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;line-height:1.05;letter-spacing:-.02em;color:#f0f0f5}
-.hdr-l2{display:inline-flex;align-items:center;background:rgba(244,160,110,.15);color:#f4a06e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:7px;margin-top:5px}
-.hdr-logo{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;animation:logoBreathe 3.5s ease-in-out infinite;margin-top:2px}
-@keyframes logoBreathe{
-  0%,100%{ box-shadow:0 0 0px 0px rgba(232,184,75,0);background:#e8b84b; }
-  50%    { box-shadow:0 0 16px 6px rgba(232,184,75,.5);background:#f2ca52; }
-}
-.hdr-logo img{width:100%;height:100%;object-fit:cover;display:none;opacity:0;transition:opacity .4s ease}
-.hdr-logo img.loaded{opacity:1}
+.hdr-l1{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;line-height:1.22;letter-spacing:-.02em;color:#f0f0f5}
+
+/* department pill: rounded-rect (not a full capsule) with a per-dept icon + name */
+.dept-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 13px 7px 9px;border-radius:11px;flex-shrink:0}
+.dept-pill-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0}
+.dept-pill-icon svg{width:100%;height:100%;display:block}
+.dept-pill-name{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 
         /* Big loader (full-page: jadwal / ringkasan / catatan) */
 .big-spin{display:flex;gap:8px;justify-content:center;align-items:flex-end;height:30px;margin:0 auto 14px}
@@ -164,10 +162,6 @@ input, textarea {
 .ld-txt{font-size:14px;color:#8890aa;animation:ldPulse 1.3s ease-in-out infinite}
 @keyframes ldPulse{0%,100%{opacity:.55}50%{opacity:1}}
 
-.vol-card{cursor:pointer}
-.vol-card:active{background:#171b24}
-.vol-card-switch{flex-shrink:0;color:#4a5070;align-self:center}
-        
 /* ── SEARCH ───────────────── */
 .srch{position:relative;margin-bottom:14px}
 .srch-icon{position:absolute;left:calc(var(--page-pad) + 13px);top:50%;transform:translateY(-50%);color:#4a5070;pointer-events:none;transition:color .2s}
@@ -209,7 +203,9 @@ input, textarea {
 .home-p{font-size:15px;color:#8890aa;line-height:1.65}
 
 /* ── VOL CARD ─────────────── */
-.vol-card{display:flex;align-items:center;gap:13px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:18px;padding:18px;margin-bottom:14px;transform-origin:top center;animation:slideDown .36s cubic-bezier(.34,1.56,.64,1) both}
+.vol-card{display:flex;align-items:center;gap:13px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:18px;padding:18px;margin-bottom:14px;transform-origin:top center;animation:slideDown .36s cubic-bezier(.34,1.56,.64,1) both;cursor:pointer}
+.vol-card:active{background:#171b24}
+.vol-card-switch{flex-shrink:0;color:#4a5070;align-self:center}
 @keyframes slideDown{
   0%  { opacity:0; transform:translateY(-10px) scaleY(.88); }
   65% { opacity:1; transform:translateY(1px) scaleY(1.03); }
@@ -476,10 +472,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .selfie-btn:active{background:rgba(232,184,75,.15)}
 .selfie-btn:disabled{opacity:.5;cursor:default}
 .selfie-input{display:none}
-.dept-filter{padding:0 var(--page-pad);margin-top:8px;margin-bottom:6px}
-.dept-filter select{width:100%;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:12px;padding:11px 38px 11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#f0f0f5;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%238890aa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
-.dept-filter select:focus{border-color:#e8b84b}
-.dept-pill{display:inline-block;background:rgba(244,160,110,.15);color:#f4a06e;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:.06em;padding:6px 14px;border-radius:9px;margin:20px 0 6px}
+/* .dept-pill (top-right header badge) used to be a plain inline label here — now defined near .hdr-l1 above with icon support */
 
 /* ── STATES ───────────────── */
 .empty{text-align:center;padding:40px 0;animation:emptyPop .32s cubic-bezier(.34,1.56,.64,1) both}
@@ -569,12 +562,15 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     <div class="hdr-top">
       <button class="menu-btn" onclick="openDr()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="hdr-text">
-        <div class="hdr-l1" id="hdr-l1">Jadwal Pelayanan</div>
-        <div class="hdr-l2" id="hdr-l2">PAW DEPARTMENT</div>
+        <div class="hdr-l1" id="hdr-l1">Jadwal<br>Pelayanan</div>
       </div>
-      <div class="hdr-logo" id="hdr-logo"><img id="hdr-logo-img" src="" alt="" style="display:none"></div>
+      <div class="dept-pill" id="dept-pill" style="display:none">
+        <span class="dept-pill-icon" id="dept-pill-icon"></span>
+        <span class="dept-pill-name" id="dept-pill-name"></span>
+      </div>
     </div>
   </div>
+
   <div class="content ready" id="content">
     <div class="home"><div class="home-orb"><svg viewBox="0 0 24 24" fill="none" stroke="#e8b84b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="home-h">Welcome Home!</div><div class="home-p">Cari namamu untuk melihat<br>jadwal pelayananmu.</div></div>
   </div>
@@ -694,6 +690,34 @@ var RC={
   sound:    {fg:"#b8c2d9",bg:"rgba(184,194,217,.16)"}
 };
 
+/* ── DEPARTMENT COLORS + ICONS ── */
+/* PAW is deliberately a rust/burnt orange (not amber) so it never blurs
+   into the SPV/MD/Sequencer/SD role chips, which are already amber-orange. */
+var DEPT_META = {
+  "PAW":      {fg:"#e0793a", bg:"rgba(224,121,58,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>'},
+  "MM":       {fg:"#5b8cf4", bg:"rgba(91,140,244,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>'},
+  "Sound":    {fg:"#aab2c5", bg:"rgba(170,178,197,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><rect x="17" y="14" width="4" height="7" rx="2"/><rect x="3" y="14" width="4" height="7" rx="2"/></svg>'},
+  "CM":       {fg:"#f4685b", bg:"rgba(244,104,91,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>'},
+  "Prayer":   {fg:"#a9835f", bg:"rgba(169,131,95,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v7"/><path d="M8.5 6.5 12 9l3.5-2.5"/><path d="M7 22v-6.5a5 5 0 0 1 10 0V22"/></svg>'},
+  "Usher":    {fg:"#4ade80", bg:"rgba(74,222,128,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>'},
+  "Kids":     {fg:"#f2d94e", bg:"rgba(242,217,78,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/></svg>'},
+  "Kitchen":  {fg:"#2dd4bf", bg:"rgba(45,212,191,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>'},
+  "Security": {fg:"#6c7ae0", bg:"rgba(108,122,224,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
+  "Admin":    {fg:"#f472b6", bg:"rgba(244,114,182,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'}
+};
+var DEPT_FALLBACK={fg:"#8890aa",bg:"rgba(136,144,170,.16)",
+  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>'};
+
 var SS={1:"background:rgba(244,160,110,.10)",2:"background:rgba(250,200,100,.09)",3:"background:rgba(126,184,247,.09)",4:"background:rgba(148,163,184,.09)"};
 
 var PAW_ROLES=["Speaker","WL","Singer","Keys","Guitar","Bass","Drums","SPV","MD","Sequencer","SD","CM","Soundman"];
@@ -722,6 +746,10 @@ function rowTint(role){
   return "rgba("+m[1]+","+m[2]+","+m[3]+","+a.toFixed(3)+")";
 }
 
+function deptMeta(dept){ return DEPT_META[dept] || DEPT_FALLBACK; }
+function deptColor(dept){ var m=deptMeta(dept); return {fg:m.fg,bg:m.bg}; }
+function deptChipCss(dept){ var c=deptColor(dept); return "color:"+c.fg+";background:"+c.bg; }
+
 var st={
   mainTab:"jadwal",
   vol:null,allEvents:[],schedTab:"jadwal",viewYear:0,viewMonth:0,monthDir:1,openKey:null,rosterCache:{},query:"",debounce:null,sugList:[],justPicked:false,
@@ -734,10 +762,16 @@ var st={
 
 (function(){var now=new Date();st.ringYear=now.getFullYear();st.ringMonth=now.getMonth();})();
 
+function titleTwoLines(text){
+  var parts=String(text||"").trim().split(/\s+/);
+  if(parts.length<=1) return esc(text);
+  var mid=Math.ceil(parts.length/2);
+  return esc(parts.slice(0,mid).join(" "))+"<br>"+esc(parts.slice(mid).join(" "));
+}
+
 google.script.run.withSuccessHandler(function(c){
   var church=c.churchName||"GMS Salatiga";
-  document.getElementById("hdr-l1").textContent=APP_CONFIG.appTitle;
-  document.getElementById("hdr-l2").textContent=APP_CONFIG.deptLabel;
+  document.getElementById("hdr-l1").innerHTML=titleTwoLines(APP_CONFIG.appTitle);
   document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
   document.getElementById("dr-church").textContent=church;
   document.getElementById("gate-title").textContent=APP_CONFIG.appTitle;
@@ -746,7 +780,7 @@ google.script.run.withSuccessHandler(function(c){
   st.departments=c.departments||Object.keys(st.rolesByDept);
   populateDeptFilter();
 if(c.logoUrl){
-  ["hdr-logo-img","dr-logo","gate-logo-img"].forEach(function(id){
+  ["dr-logo","gate-logo-img"].forEach(function(id){
     var el=document.getElementById(id);
     if(el){
       el.style.display="block";
@@ -861,22 +895,8 @@ function enterApp(){
   loginAsVol(v);
 }
 
-/* ── SEARCH ── */
-function onInput(){
-  var q=document.getElementById("sinp").value.trim();
-  st.query=q;
-  st.justPicked=false;
-  document.getElementById("sbtn").style.display=q?"flex":"none";
-  if(!q){hideSug();return;}
-  clearTimeout(st.debounce);
-  st.debounce=setTimeout(function(){doSearch(q);},150);
-}
-
-function onFocus(){
-  if(st.justPicked||st.vol){st.justPicked=false;return;}
-  if(st.query)doSearch(st.query);
-}
-
+/* dept-filter and in-page search bar were removed — identity now only comes
+   from the onboarding gate (see "ONBOARDING GATE" above) or a saved localStorage name. */
 function populateDeptFilter(){
   var gateSel=document.getElementById("gate-dept");
   if(!st.departments||!gateSel)return;
@@ -885,76 +905,11 @@ function populateDeptFilter(){
   });
 }
 
-function onDeptFilter(){
-  var sel=document.getElementById("dept-filter");
-  st.deptFilter=sel?sel.value:"";
-  try{localStorage.setItem(APP_CONFIG.storagePrefix+"deptFilter",st.deptFilter);}catch(e){}
-  setDeptHeader(st.deptFilter||null);
-  var q=document.getElementById("sinp").value.trim();
-  if(q)doSearch(q);
-}
-
-function doSearch(q){
-  if(!st.allMusicians || !st.allMusicians.length){
-    google.script.run.withSuccessHandler(function(list){
-      if(st.vol || document.getElementById("sinp").value.trim()!==q) return;
-      showSug(list);
-    }).searchVolunteers(q);
-    return;
-  }
-  var ql=q.toLowerCase();
-  var list=st.allMusicians.filter(function(m){
-    if(st.deptFilter && m.dept!==st.deptFilter) return false;
-    return m.name.toLowerCase().indexOf(ql)!==-1;
-  }).slice(0,15);
-  showSug(list);
-}
-
-function showSug(list){
-  st.sugList=list||[];var box=document.getElementById("sug");
-  if(!st.sugList.length){box.innerHTML='<div class="sug-empty">Nama tidak ditemukan</div>';}
-  else{box.innerHTML=st.sugList.map(function(m,i){return'<div class="sug-item" onclick="pickVol('+i+')"><div class="sug-av" style="'+avCss(m.roles[0]||"soundman")+'">'+av(m.photo,m.name,36,m.roles[0])+'</div><div><div class="sug-name">'+esc(m.name)+'</div><div class="sug-badges">'+m.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+'</div></div></div>';}).join('');}
-  box.style.display="block";
-}
-function hideSug(){document.getElementById("sug").style.display="none";}
-
 function loginAsVol(v){
   st.vol=v;st.openKey=null;st.rosterCache={};
   showLoading();
   try{localStorage.setItem(APP_CONFIG.storagePrefix + "volName", v.name);}catch(e){console.warn("localStorage set failed",e);}
   google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getVolunteerSchedule(v.name);
-}
-
-function pickVol(idx){
-  var v=st.sugList[idx];if(!v)return;
-  document.getElementById("sinp").blur();
-  loginAsVol(v);
-}
-
-function logoutToGate(){
-  try{localStorage.removeItem(APP_CONFIG.storagePrefix + "volName");}catch(e){}
-  st.vol=null;st.allEvents=[];st.openKey=null;st.rosterCache={};
-  st.availOpenMonths=[];toggleAvailNav();
-  setDeptHeader(null);
-  document.getElementById("content").innerHTML=homeHTML();
-  document.getElementById("content").classList.add("ready");
-  showGateAgain();
-}
-
-function showGateAgain(){
-  var g=document.getElementById("gate");
-  if(!g)return;
-  g.classList.remove("closing");
-  g.style.display="flex";
-  st.gateDept="";st.gateSelectedVol=null;
-  var deptSel=document.getElementById("gate-dept");
-  if(deptSel)deptSel.value="";
-  var wrap=document.getElementById("gate-name-wrap");
-  var inp=document.getElementById("gate-name-inp");
-  wrap.style.opacity=".4";wrap.style.pointerEvents="none";
-  inp.disabled=true;inp.value="";inp.placeholder="Pilih departemen dulu…";
-  document.getElementById("gate-enter-btn").disabled=true;
-  hideGateSug();   
 }
 
 // Fetches the dept-scoped availability-open-months list and shows/hides the
@@ -1663,32 +1618,52 @@ function chMonth(d){
 }
 function scrollToDate(iso){var pre="card-"+iso.replace(/-/g,"_")+"_";var cards=document.querySelectorAll(".ecard");for(var i=0;i<cards.length;i++){if(cards[i].id.indexOf(pre)===0){var top=cards[i].getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:top,behavior:"smooth"});return;}}}
 
-function clearSrch(){
+// Tapping the name card (vol-card) sends the person back to the onboarding
+// gate to switch identity, replacing the old in-page search "✕ clear" flow.
+function logoutToGate(){
   try{localStorage.removeItem(APP_CONFIG.storagePrefix + "volName");}catch(e){console.warn("localStorage remove failed",e);}
-  document.getElementById("sinp").value="";
-  hideSug();
   st.vol=null;
   st.allEvents=[];
   st.openKey=null;
   st.rosterCache={};
-  st.query="";
-  st.sugList=[];
   st.availOpenMonths=[];
   toggleAvailNav();
-  setDeptHeader(st.deptFilter||null);
+  setDeptHeader(null);
   document.getElementById("content").innerHTML=homeHTML();
   document.getElementById("content").classList.add("ready");
+  showGateAgain();
+}
+
+function showGateAgain(){
+  var g=document.getElementById("gate");
+  if(!g)return;
+  g.classList.remove("closing");
+  g.style.display="flex";
+  st.gateDept="";st.gateSelectedVol=null;
+  var deptSel=document.getElementById("gate-dept");
+  if(deptSel)deptSel.value="";
+  var wrap=document.getElementById("gate-name-wrap");
+  var inp=document.getElementById("gate-name-inp");
+  wrap.style.opacity=".4";wrap.style.pointerEvents="none";
+  inp.disabled=true;inp.value="";inp.placeholder="Pilih departemen dulu…";
+  document.getElementById("gate-enter-btn").disabled=true;
+  hideGateSug();
 }
 
 function setDeptHeader(dept){
-  var el=document.getElementById("hdr-l2");
-  if(!el)return;
+  var pill=document.getElementById("dept-pill");
+  var iconEl=document.getElementById("dept-pill-icon");
+  var nameEl=document.getElementById("dept-pill-name");
+  if(!pill)return;
   if(dept){
-    el.textContent=dept.toUpperCase()+" DEPARTMENT";
-    el.style.cssText="display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:7px;margin-top:5px;"+deptChipCss(dept);
+    var m=deptMeta(dept);
+    pill.style.display="inline-flex";
+    pill.style.background=m.bg;
+    pill.style.color=m.fg;
+    iconEl.innerHTML=m.icon;
+    nameEl.textContent=dept;
   } else {
-    el.textContent=APP_CONFIG.deptLabel;
-    el.removeAttribute("style");
+    pill.style.display="none";
   }
 }
 
@@ -1713,8 +1688,8 @@ function mOf(iso){var p=iso.split("-");return{year:parseInt(p[0]),month:parseInt
 function mKey(y,m){return y+"-"+pad(m+1);}
 function mLabel(iso){var p=iso.split("-");return BLN_L[parseInt(p[1])-1]+" "+p[0];}
 
-document.addEventListener("touchstart",function(e){if(!e.target.closest(".srch"))hideSug();},{passive:true});
-document.addEventListener("click",function(e){if(!e.target.closest(".srch"))hideSug();});
+document.addEventListener("touchstart",function(e){if(!e.target.closest(".srch"))hideGateSug();},{passive:true});
+document.addEventListener("click",function(e){if(!e.target.closest(".srch"))hideGateSug();});
 (function(){var sx=0;document.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;},{passive:true});document.addEventListener("touchend",function(e){if(e.changedTouches[0].clientX-sx<-50&&document.getElementById("dr").classList.contains("on"))closeDr();},{passive:true});})();
 
 // ── GYRO LIGHT ──
