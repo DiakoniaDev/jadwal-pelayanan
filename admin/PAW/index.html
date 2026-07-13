@@ -398,6 +398,33 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .sq-reject{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.35)}
 .sq-btn:disabled{opacity:.5;cursor:default}
 .sq-empty{text-align:center;padding:48px 16px;color:#8890aa;font-size:14px}
+.dp-wrap{padding-bottom:40px}
+.dp-picker{background:#12151c;border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:16px;margin-bottom:20px}
+.dp-picker-h{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#e8b84b;margin-bottom:12px}
+.dp-field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.dp-field label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#8890aa}
+.dp-inp{width:100%;background:#0f1218;border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:#f0f0f5;outline:none;-webkit-appearance:none}
+.dp-inp:focus{border-color:#e8b84b}
+.dp-inp::placeholder{color:#4a5070}
+.dp-go{width:100%;padding:11px;border-radius:10px;border:none;background:#e8b84b;color:#0a0c10;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.dp-go:disabled{opacity:.5;cursor:default}
+.dp-sec-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a5070;margin:6px 0 12px}
+.dp-list{display:flex;flex-direction:column;gap:10px}
+.dp-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+.dp-card.has{border-color:rgba(74,222,128,.3)}
+.dp-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.dp-svc{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#f0f0f5}
+.dp-date{font-size:12px;color:#8890aa;margin-top:2px}
+.dp-stat{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.dp-stat.has{background:rgba(74,222,128,.16);color:#4ade80}
+.dp-stat.none{background:rgba(255,255,255,.06);color:#8890aa}
+.dp-url-inp{width:100%;background:#0f1218;border:1.5px solid rgba(255,255,255,.12);border-radius:9px;padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:#f0f0f5;outline:none;margin-bottom:8px;-webkit-appearance:none}
+.dp-url-inp:focus{border-color:#e8b84b}
+.dp-row-actions{display:flex;gap:8px;align-items:center}
+.dp-save{flex:1;padding:9px;border-radius:9px;border:none;background:#333744;color:#666a7a;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:default}
+.dp-save.dirty{background:#e8b84b;color:#0a0c10;cursor:pointer}
+.dp-open{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#e8b84b;text-decoration:none;padding:9px 12px;border:1px solid rgba(232,184,75,.3);border-radius:9px}
+.dp-empty{text-align:center;padding:40px 16px;color:#8890aa;font-size:14px}
 .modal-ov{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-ov.on{opacity:1;pointer-events:all}
 .modal-box{position:fixed;left:50%;bottom:0;transform:translateX(-50%) translateY(100%);z-index:401;width:100%;max-width:480px;background:#12151c;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);padding:24px 24px calc(24px + env(safe-area-inset-bottom,0px));transition:transform .32s cubic-bezier(.22,1,.36,1)}
@@ -516,6 +543,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
     <div class="dr-item" id="dn-ringkasan" onclick="navTo('ringkasan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Ringkasan</div>
     <div class="dr-item" id="dn-catatan" onclick="navTo('catatan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Catatan</div>
     <div class="dr-item" id="dn-masukan" onclick="navTo('masukan')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Kritik &amp; Saran</div>
+    <div class="dr-item" id="dn-dresscode" style="display:none" onclick="navTo('dresscode')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>Dresscode</div>
     <div class="dr-item" id="dn-selfie" style="display:none" onclick="navTo('selfie')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Approval Selfie</div>
     <div class="dr-item" id="dn-sheet" onclick="navTo('sheet')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Buka Sheet</div>
   </nav>
@@ -609,6 +637,7 @@ var API_PARAM_MAP = {
   saveSonglist:      ['date','service','songsJson'],
   deleteSonglist:    ['date','service'],
   getDresscode:      ['date','service'],
+  getDresscodeList:  ['dept','year','month'],
   saveDresscode:     ['date','service','pdfUrl'],
   getSelfieQueue:    [],
   approveSelfie:     ['date','service','name','decision','approvedBy']
@@ -735,6 +764,8 @@ function applyDeptLabels(){
   var b = document.getElementById('hdr-dept-badge'); if (b) b.textContent = ADMIN_DEPT || "";
   var selfieNav = document.getElementById('dn-selfie');
   if (selfieNav) selfieNav.style.display = (ADMIN_DEPT === 'CM') ? 'flex' : 'none';
+  var dressNav = document.getElementById('dn-dresscode');
+  if (dressNav) dressNav.style.display = (ADMIN_DEPT === 'CM') ? 'flex' : 'none';
 }
 
 // Populate the login dept dropdown from getConfig (fixed list, no key needed).
@@ -822,7 +853,7 @@ function C(r){return RC[(r||"").toLowerCase()]||RC.soundman;}
 function roleLabel(r){var map={"Soundman":"Sound","Sequencer":"Seq"};return map[r]||r;}
 function serviceLabel(s){var map={"Ibadah 123":"Umum"};return map[s]||s;}
 
-var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending"};
+var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending",dressList:[]};
 
 (function(){var now=new Date();st.year=now.getFullYear();st.month=now.getMonth();st.availYear=now.getFullYear();st.availMonth=now.getMonth();if(ADMIN_KEY&&ADMIN_DEPT)loadData();})();
 
@@ -877,11 +908,11 @@ function closeDr(){document.getElementById("dr").classList.remove("on");document
 
 function navTo(tab){
   st.tab=tab;closeDr();
-  ["jadwal","ringkasan","ketersediaan","catatan","masukan","selfie","sheet"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
+  ["jadwal","ringkasan","ketersediaan","catatan","masukan","dresscode","selfie","sheet"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
   renderTab();
 }
 
-function renderTab(){if(!st.loaded)return;if(st.tab==="jadwal")renderJadwal();else if(st.tab==="ringkasan")renderRingkasan();else if(st.tab==="ketersediaan")renderKetersediaan();else if(st.tab==="catatan")renderCatatan();else if(st.tab==="masukan")renderMasukan();else if(st.tab==="selfie")renderSelfieQueue();else renderSheet();}
+function renderTab(){if(!st.loaded)return;if(st.tab==="jadwal")renderJadwal();else if(st.tab==="ringkasan")renderRingkasan();else if(st.tab==="ketersediaan")renderKetersediaan();else if(st.tab==="catatan")renderCatatan();else if(st.tab==="masukan")renderMasukan();else if(st.tab==="selfie")renderSelfieQueue();else if(st.tab==="dresscode")renderDresscodePage();else renderSheet();}
 
 function chMonth(dir){
   st.month+=dir;if(st.month>11){st.month=0;st.year++;}if(st.month<0){st.month=11;st.year--;}
@@ -1820,6 +1851,100 @@ function decideSelfie(idx,decision){
     if(card){card.querySelectorAll(".sq-btn").forEach(function(b){b.disabled=false;});}
     showToast("Gagal: "+(e.message||e),"err");
   });
+}
+
+// ── CM STANDALONE DRESSCODE PAGE ─────────────────────────────
+function renderDresscodePage(){
+  if(st.dept!=="CM"){document.getElementById("content").innerHTML='<div class="dp-empty">Halaman ini khusus departemen CM.</div>';return;}
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat dresscode…</div></div>';
+  callApi('getDresscodeList',[st.year,st.month]).then(function(res){
+    st.dressList=(res&&res.services)||[];
+    buildDresscodePage();
+  }).catch(function(e){
+    document.getElementById("content").innerHTML='<div class="dp-empty">Gagal memuat: '+esc(e.message||e)+'</div>';
+  });
+}
+
+function buildDresscodePage(){
+  var list=st.dressList||[];
+  var h='<div class="dp-wrap">';
+
+  // ── manual picker: attach to ANY date+service ──
+  h+='<div class="dp-picker">'+
+      '<div class="dp-picker-h">Tambah Dresscode (Manual)</div>'+
+      '<div class="dp-field"><label>Tanggal</label><input class="dp-inp" type="date" id="dp-date"></div>'+
+      '<div class="dp-field"><label>Nama Ibadah</label><input class="dp-inp" type="text" id="dp-service" placeholder="mis. Ibadah 1"></div>'+
+      '<div class="dp-field"><label>Link PDF (Google Drive)</label><input class="dp-inp" type="text" id="dp-url" placeholder="https://drive.google.com/file/d/…/view"></div>'+
+      '<button class="dp-go" onclick="saveManualDresscode()">Simpan Dresscode ✓</button>'+
+    '</div>';
+
+  h+='<div class="dp-sec-lbl">Ibadah Bulan Ini</div>';
+  if(!list.length){
+    h+='<div class="dp-empty">Belum ada ibadah terjadwal bulan ini.</div>';
+  } else {
+    h+='<div class="dp-list">';
+    list.forEach(function(it,i){
+      var d=new Date(it.date+"T00:00:00");
+      var dstr=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
+      var has=!!it.pdfUrl;
+      h+='<div class="dp-card'+(has?" has":"")+'" id="dp-card-'+i+'">'+
+          '<div class="dp-card-top">'+
+            '<div><div class="dp-svc">'+esc(it.service)+'</div><div class="dp-date">'+esc(dstr)+'</div></div>'+
+            '<span class="dp-stat '+(has?"has":"none")+'">'+(has?"✅ Ada":"— Kosong")+'</span>'+
+          '</div>'+
+          '<input class="dp-url-inp" type="text" id="dp-url-'+i+'" placeholder="Tempel link PDF…" value="'+esc(it.pdfUrl||"")+'" oninput="onListDressInput('+i+')">'+
+          '<div class="dp-row-actions">'+
+            '<button class="dp-save" id="dp-save-'+i+'" onclick="saveListDresscode('+i+')" disabled>Simpan ✓</button>'+
+            (has?'<a class="dp-open" href="'+encodeURI(it.pdfUrl)+'" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Buka</a>':'')+
+          '</div>'+
+        '</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  document.getElementById("content").innerHTML=h;
+}
+
+function onListDressInput(i){
+  var btn=document.getElementById("dp-save-"+i);
+  if(btn){btn.classList.add("dirty");btn.disabled=false;}
+}
+
+function saveListDresscode(i){
+  var it=(st.dressList||[])[i]; if(!it)return;
+  var inp=document.getElementById("dp-url-"+i);
+  var url=inp?inp.value.trim():"";
+  var btn=document.getElementById("dp-save-"+i);
+  if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
+  callApi('saveDresscode',[it.date,it.service,url]).then(function(res){
+    if(res&&res.ok){
+      it.pdfUrl=url;
+      showToast(res.msg||"Dresscode tersimpan.","ok");
+      buildDresscodePage();
+    } else {
+      if(btn){btn.disabled=false;btn.classList.add("dirty");btn.textContent="Simpan ✓";}
+      showToast((res&&res.msg)||"Gagal.","err");
+    }
+  }).catch(function(e){
+    if(btn){btn.disabled=false;btn.classList.add("dirty");btn.textContent="Simpan ✓";}
+    showToast("Gagal: "+(e.message||e),"err");
+  });
+}
+
+function saveManualDresscode(){
+  var date=(document.getElementById("dp-date")||{}).value||"";
+  var service=((document.getElementById("dp-service")||{}).value||"").trim();
+  var url=((document.getElementById("dp-url")||{}).value||"").trim();
+  if(!date){showToast("Pilih tanggal.","warn");return;}
+  if(!service){showToast("Isi nama ibadah.","warn");return;}
+  callApi('saveDresscode',[date,service,url]).then(function(res){
+    if(res&&res.ok){
+      showToast(res.msg||"Dresscode tersimpan.","ok");
+      renderDresscodePage(); // reload list (may now include this service if scheduled)
+    } else {
+      showToast((res&&res.msg)||"Gagal.","err");
+    }
+  }).catch(function(e){ showToast("Gagal: "+(e.message||e),"err"); });
 }
 
 function saveRoster(){
