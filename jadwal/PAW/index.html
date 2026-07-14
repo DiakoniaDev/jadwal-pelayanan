@@ -729,7 +729,8 @@ function chipCss(r){var c=C(r);return"color:"+c.fg+";background:"+c.bg;}
 function avCss(r){var c=C(r);return"background:"+c.bg+";color:"+c.fg;}
 function rcolor(r){return C(r).fg;}
 function roleLabel(r){var map={"Soundman":"Sound","Sequencer":"Seq"};return map[r]||r;}
-function serviceLabel(s){var map={"Ibadah 123":"Umum"};return map[s]||s;}
+function serviceLabel(s){var map={};return map[s]||s;}
+function fmtGroup(g){g=String(g||"").trim();if(!g)return"";return /^group/i.test(g)?g.replace(/^group\s*/i,"Group "):"Group "+g;}
 
 function defaultTimesFor(rawService,firstOnly){
   var full={"Ibadah 123":"07:00, 09:30, 17:00","AOG":"17:00, 18:30"};
@@ -929,7 +930,7 @@ function gotEvents(resp){
   if (dept && st.structureByDept[dept]) ROST = st.structureByDept[dept];
   if (dept && st.rolesByDept[dept]) PAW_ROLES = st.rolesByDept[dept];
   setDeptHeader(dept);
-  st.allEvents=events;var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
+  st.allEvents=mergeIbadah123_(events);var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
   refreshAvailNav_(dept);
   renderJadwal();
 }
@@ -938,7 +939,7 @@ function gotEvents(resp){
 function renderJadwal(){
   if(!st.vol){document.getElementById("content").innerHTML=homeHTML();return;}
   var v=st.vol;var up=st.allEvents.filter(function(e){return !e.isPast;});
-  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(v.group)+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
+  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
     '<div class="sched-tabs"><button class="sched-tab'+(st.schedTab==="jadwal"?" on":"")+'" onclick="switchST(\'jadwal\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</button><button class="sched-tab'+(st.schedTab==="riwayat"?" on":"")+'" onclick="switchST(\'riwayat\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat</button></div>'+
     (st.schedTab==="jadwal"?buildSched():buildRiwayat());
   document.getElementById("content").innerHTML=h;
@@ -991,12 +992,96 @@ function buildRiwayat(){
   var h="";ord.forEach(function(mk){var gi=g[mk];h+='<div class="hist-group"><div class="hist-month">'+gi.lbl+'</div><div class="ev-list">';gi.evs.forEach(function(ev,i){h+=cardHTML(ev,i);});h+='</div></div>';});return h;
 }
 
+/* ── MERGE Ibadah 1/2/3 → single "Ibadah 123" card ── */
+var IBADAH_TRIO=["Ibadah 1","Ibadah 2","Ibadah 3"];
+
+// representative service for song/dress/selfie on a merged card
+function svcOf_(ev){return ev&&ev.merged&&ev.merged.length?ev.merged[0]:(ev&&ev.service);}
+
+function mergeIbadah123_(events){
+  var trioByDate={};
+  events.forEach(function(e){
+    if(IBADAH_TRIO.indexOf(e.service)!==-1)
+      (trioByDate[e.date]=trioByDate[e.date]||{})[e.service]=e;
+  });
+  var mergeDates={};
+  Object.keys(trioByDate).forEach(function(d){
+    var m=trioByDate[d];
+    if(m["Ibadah 1"]&&m["Ibadah 2"]&&m["Ibadah 3"])mergeDates[d]=true;
+  });
+  var out=[],emitted={};
+  events.forEach(function(e){
+    var isTrio=mergeDates[e.date]&&IBADAH_TRIO.indexOf(e.service)!==-1;
+    if(!isTrio){out.push(e);return;}
+    var m=trioByDate[e.date];
+    var sameRole=m["Ibadah 1"].role===m["Ibadah 2"].role&&m["Ibadah 2"].role===m["Ibadah 3"].role;
+    if(!sameRole){out.push(e);return;}   // roles differ across services → keep 3 separate cards
+    if(emitted[e.date])return;           // merged card already added → drop the other two
+    emitted[e.date]=true;
+    var subs=IBADAH_TRIO.map(function(sv){return m[sv].subStatus||"aktif";});
+    var subStatus=subs.every(function(x){return x===subs[0];})?subs[0]:"aktif";
+    out.push({
+      date:e.date,
+      service:"Ibadah 123",
+      time:"07:00, 09:30, 17:00",
+      role:m["Ibadah 1"].role,
+      name:e.name,
+      isPast:m["Ibadah 1"].isPast&&m["Ibadah 2"].isPast&&m["Ibadah 3"].isPast,
+      isSpecial:!!(m["Ibadah 1"].isSpecial||m["Ibadah 2"].isSpecial||m["Ibadah 3"].isSpecial),
+      subStatus:subStatus,
+      merged:IBADAH_TRIO.slice()
+    });
+  });
+  return out;
+}
+
+function fetchMergedRoster_(ev,onOk,onErr){
+  var services=ev.merged,dept=st.vol&&st.vol.dept;
+  var results=new Array(services.length),pending=services.length,failed=false;
+  services.forEach(function(svc,i){
+    var k=ev.date+"|"+svc;
+    if(st.rosterCache[k]){                       // reuse the roster bundle already loaded
+      results[i]=st.rosterCache[k];
+      if(--pending===0&&!failed)onOk(combineRosters_(results));
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function(data){
+        st.rosterCache[k]=data;results[i]=data;
+        if(--pending===0&&!failed)onOk(combineRosters_(results));
+      })
+      .withFailureHandler(function(e){if(!failed){failed=true;onErr(e);}})
+      .getServiceRoster(ev.date,svc,dept);
+  });
+}
+
+function combineRosters_(list){
+  var outSlots={},groupLabel="";
+  list.forEach(function(data){
+    if(!data)return;
+    var slots=data.slots||data;
+    if(data.groupLabel&&!groupLabel)groupLabel=data.groupLabel;
+    Object.keys(slots).forEach(function(role){
+      if(!outSlots[role])outSlots[role]=[];
+      (slots[role]||[]).forEach(function(slot){
+        var on=(slot.original&&slot.original.name)||"";
+        var sn=(slot.substitute&&slot.substitute.name)||"";
+        var dup=outSlots[role].some(function(x){
+          return((x.original&&x.original.name)||"")===on&&((x.substitute&&x.substitute.name)||"")===sn;
+        });
+        if(!dup)outSlots[role].push(slot);      // union per role, de-dup identical people
+      });
+    });
+  });
+  return{slots:outSlots,groupLabel:groupLabel};
+}
+
 function cardHTML(ev,idx){
   var dp=ev.date.split("-"),dObj=new Date(ev.date+"T00:00:00"),key=ev.date+"|"+ev.service,kid=safeId(key),isTod=ev.date===isoToday(),ss=ev.subStatus||"aktif";
   var displayTime=ev.time||defaultTimesFor(ev.service);
   var subBadge="";if(ss==="digantikan")subBadge='<span class="sub-badge out">Diganti</span>';else if(ss==="menggantikan")subBadge='<span class="sub-badge in">Mengganti</span>';
   var cardCls="ecard"+(ev.isPast?" past":"")+(ss==="digantikan"?" digantikan":ss==="menggantikan"?" menggantikan":(ev.isSpecial?" special":""));
-  return'<div class="'+cardCls+'" id="card-'+kid+'" onclick="toggleCard(\''+escQ(key)+'\',\''+escQ(ev.name)+'\')"><div class="ecard-top"><div class="date-blk'+(isTod?" today":"")+'"><div class="db-dow">'+HARI_L[dObj.getDay()]+'</div><div class="db-num">'+parseInt(dp[2])+'</div><div class="db-mon">'+BLN_S[parseInt(dp[1])-1]+'</div></div><div class="ecard-info">'+(displayTime?'<div class="ecard-time-top">'+esc(displayTime)+'</div>':'')+'<div class="ecard-svc">'+esc(serviceLabel(ev.service))+'</div><div class="ecard-meta-row"><div class="ecard-tags-wrap"><span class="role-chip" style="'+chipCss(ev.role)+'">'+esc(roleLabel(ev.role))+'</span>'+(subBadge||"")+'</div><span class="ecard-arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div></div></div><div class="roster" id="r-'+kid+'">'+cardBody(kid,ev)+'</div></div>';
+  return'<div class="'+cardCls+'" id="card-'+kid+'"><div class="ecard-top" onclick="toggleCard(\''+escQ(key)+'\',\''+escQ(ev.name)+'\')"><div class="date-blk'+(isTod?" today":"")+'"><div class="db-dow">'+HARI_L[dObj.getDay()]+'</div><div class="db-num">'+parseInt(dp[2])+'</div><div class="db-mon">'+BLN_S[parseInt(dp[1])-1]+'</div></div><div class="ecard-info">'+(displayTime?'<div class="ecard-time-top">'+esc(displayTime)+'</div>':'')+'<div class="ecard-svc">'+esc(serviceLabel(ev.service))+'</div><div class="ecard-meta-row"><div class="ecard-tags-wrap"><span class="role-chip" style="'+chipCss(ev.role)+'">'+esc(roleLabel(ev.role))+'</span>'+(subBadge||"")+'</div><span class="ecard-arr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></div></div></div><div class="roster" id="r-'+kid+'">'+cardBody(kid,ev)+'</div></div>';
 }
 
 function scrollToCard(card){
@@ -1029,20 +1114,25 @@ function toggleCard(key,myName){
       growRoster(kid);
       scrollToCard(card);
     } else {
-      var pipe=key.indexOf("|");
-      google.script.run
-        .withSuccessHandler(function(data){
-          st.rosterCache[key]=data;
-          fillRoster("ri-"+kid,data,myName);
-          growRoster(kid);
-          scrollToCard(card);
-        })
-        .withFailureHandler(function(e){
-          console.error("getServiceRoster failed:",e);
-          setRosterHTML(document.getElementById("ri-"+kid),'<div style="color:#f87171;font-size:13px;text-align:center;padding:6px">Gagal memuat: '+esc(e.message)+'</div>');
-          growRoster(kid);
-        })
-        .getServiceRoster(key.substring(0,pipe),key.substring(pipe+1),st.vol&&st.vol.dept);
+      var evObj=findEventByKid_(kid);
+      var onOk=function(data){
+        st.rosterCache[key]=data;
+        fillRoster("ri-"+kid,data,myName);
+        growRoster(kid);
+        scrollToCard(card);
+      };
+      var onErr=function(e){
+        console.error("getServiceRoster failed:",e);
+        setRosterHTML(document.getElementById("ri-"+kid),'<div style="color:#f87171;font-size:13px;text-align:center;padding:6px">Gagal memuat: '+esc(e.message)+'</div>');
+        growRoster(kid);
+      };
+      if(evObj&&evObj.merged&&evObj.merged.length){
+        fetchMergedRoster_(evObj,onOk,onErr);
+      } else {
+        var pipe=key.indexOf("|");
+        google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr)
+          .getServiceRoster(key.substring(0,pipe),key.substring(pipe+1),st.vol&&st.vol.dept);
+      }
     }
   } else {
     if(rosterEl)rosterEl.style.maxHeight="0px";
@@ -1229,6 +1319,8 @@ function cardBody(kid,ev){
 
 function cardTab(e,kid,which){
   e.stopPropagation();
+  var card=document.getElementById("card-"+kid);
+  var beforeTop=card?card.getBoundingClientRect().top:null;   // remember header position
   ["team","song","dress"].forEach(function(t){
     var tab=document.getElementById("ct-"+t+"-"+kid);
     var pane=document.getElementById("pane-"+t+"-"+kid);
@@ -1239,6 +1331,13 @@ function cardTab(e,kid,which){
   if(which==="song")loadCardSonglist(kid,ev);
   if(which==="dress")loadCardDresscode(kid,ev);
   growRoster(kid);
+  // keep the event's date/header exactly where it was — don't let the page slide
+  if(card&&beforeTop!==null){
+    requestAnimationFrame(function(){
+      var diff=card.getBoundingClientRect().top-beforeTop;
+      if(Math.abs(diff)>1)window.scrollBy(0,diff);
+    });
+  }
 }
 
 function findEventByKid_(kid){
@@ -1264,7 +1363,7 @@ function loadCardSonglist(kid,ev){
     });
     h+='</div>';
     pane.innerHTML=h;growRoster(kid);
-  }).withFailureHandler(function(e){pane.innerHTML='<div class="song-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getSonglist(ev.date,ev.service);
+  }).withFailureHandler(function(e){pane.innerHTML='<div class="song-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getSonglist(ev.date,svcOf_(ev));
 }
 
 function loadCardDresscode(kid,ev){
@@ -1286,7 +1385,7 @@ function loadCardDresscode(kid,ev){
     h+='</div>';
     pane.innerHTML=h;growRoster(kid);
     loadMySelfie(kid,ev);
-  }).withFailureHandler(function(e){pane.innerHTML='<div class="dress-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getDresscode(ev.date,ev.service);
+  }).withFailureHandler(function(e){pane.innerHTML='<div class="dress-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getDresscode(ev.date,svcOf_(ev));
 }
 
 function selfieBoxHTML(kid,ev){
@@ -1318,7 +1417,7 @@ function loadMySelfie(kid,ev){
     renderSelfieStatus(kid,status);
     var pv=document.getElementById("selfie-preview-"+kid);
     if(pv){pv.innerHTML=(res&&res.url)?'<img class="selfie-preview" src="'+encodeURI(res.url)+'" alt="selfie">':'';}
-  }).withFailureHandler(function(){renderSelfieStatus(kid,"none");}).getMySelfie(st.vol.name,ev.date,ev.service);
+  }).withFailureHandler(function(){renderSelfieStatus(kid,"none");}).getMySelfie(st.vol.name,ev.date,svcOf_(ev));
 }
 
 function triggerSelfie(e,kid){e.stopPropagation();var inp=document.getElementById("selfie-input-"+kid);if(inp)inp.click();}
@@ -1344,7 +1443,7 @@ function onSelfiePicked(e,kid){
     }).withFailureHandler(function(err){
       if(btn){btn.disabled=false;btn.textContent="Upload Selfie";}
       alert("Gagal: "+err.message);
-    }).uploadSelfie(st.vol.name,ev.date,ev.service,dataUrl,"image/jpeg");
+    }).uploadSelfie(st.vol.name,ev.date,svcOf_(ev),dataUrl,"image/jpeg");
   });
 }
 
