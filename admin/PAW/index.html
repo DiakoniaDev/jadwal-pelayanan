@@ -118,7 +118,7 @@ input, textarea {
   background:linear-gradient(180deg,#12151c 85%,transparent);
   border-bottom:1px solid rgba(255,255,255,.06);
   padding:24px var(--page-pad) 14px;
-  margin-bottom:12px;
+  margin-bottom:22px;
   width:100%;
   animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both;
 }
@@ -230,7 +230,7 @@ input, textarea {
   .roster-page{left:0;transform:translateX(100vw)}
   .roster-page.on{transform:translateX(0)}
 }
-.rp-hdr{padding:14px var(--page-pad);background:#0d0f14;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.rp-hdr{padding:14px var(--page-pad);background:#0d0f14;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;margin-bottom:14px}
 .rp-hdr-row1{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .rp-back{width:36px;height:36px;border-radius:10px;background:none;border:1.5px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#f0f0f5;flex-shrink:0}
 .rp-back:active{background:rgba(255,255,255,.08)}
@@ -1635,19 +1635,63 @@ function buildGroupRoster(groupName, slot){
   return result;
 }
 
+// Non-PAW auto-assign: fill each role from people who LIST that role (eligibility
+// = their Peran), least-scheduled first, no double-booking within a service.
+// Specialists (one role listed) naturally stay in lane; flexible people (many
+// roles) fill remaining gaps.
+function buildPersonRoster(slot){
+  var result={};
+  var used={};
+  var cntMap={};
+  var sc=(st.data&&st.data.serviceCount)||{};
+  Object.keys(sc).forEach(function(n){ cntMap[n]=sc[n]||0; });
+
+  // pool[role] = [names of everyone eligible for that role]
+  var pool={};
+  (st.data.musicians||st.data.volunteers||[]).forEach(function(m){
+    if(!m.roles)return;
+    m.roles.forEach(function(r){ (pool[r]=pool[r]||[]).push(m.name); });
+  });
+
+  // Fill rarer roles first (fewer eligible people) so specialists get priority
+  // before flexible people are used up elsewhere.
+  var roles=PAW_ROLES.slice(); // PAW_ROLES holds THIS dept's roles after onDataLoaded
+  roles.sort(function(a,b){ return (pool[a]||[]).length-(pool[b]||[]).length; });
+
+  roles.forEach(function(role){
+    var cands=(pool[role]||[]).filter(function(n){return !used[n];});
+    cands.sort(function(a,b){return (cntMap[a]||0)-(cntMap[b]||0);});
+    if(cands.length){
+      var pick=cands[0];
+      result[role]=[pick];
+      used[pick]=true;
+      cntMap[pick]=(cntMap[pick]||0)+1; // count within this run so load spreads across services too
+    } else {
+      result[role]=[""];
+    }
+  });
+  return result;
+}
+
 function autoAssignAll(){
-  if(!st.data||!st.data.musicians){showToast("Data belum dimuat.","warn");return;}
+  var vols=(st.data&&(st.data.musicians||st.data.volunteers));
+  if(!vols){showToast("Data belum dimuat.","warn");return;}
+  var isPaw=(st.dept==="PAW");
   var groups=(st.data&&st.data.groups)||{};
   var groupNames=Object.keys(groups);
-  if(!groupNames.length){showToast("Belum ada group di sheet Musisi (kolom Grup).","warn");return;}
+  if(isPaw && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
   var emptySlots=st.slots.filter(function(s){return countFilled(s)===0;});
   if(!emptySlots.length){showToast("Semua sudah terisi! 🎉","ok");return;}
-  showModal("Auto Assign Semua","Mengisi "+emptySlots.length+" ibadah kosong — band diisi per group secara bergiliran.","Lanjutkan",function(){
+  var msg=isPaw
+    ? ("Mengisi "+emptySlots.length+" ibadah kosong — band diisi per group secara bergiliran.")
+    : ("Mengisi "+emptySlots.length+" ibadah kosong — tiap peran diisi orang paling jarang bertugas.");
+  showModal("Auto Assign Semua",msg,"Lanjutkan",function(){
     var total=emptySlots.length,done=0,failed=0;
     showToast("Menyimpan "+total+" ibadah…","ok");
     emptySlots.forEach(function(slot,idx){
-      var groupName=groupNames[Math.floor(Math.random()*groupNames.length)]; // random group per service
-      var res=buildGroupRoster(groupName,slot);
+      var res=isPaw
+        ? buildGroupRoster(groupNames[Math.floor(Math.random()*groupNames.length)],slot)
+        : buildPersonRoster(slot);
       var clean={};
       PAW_ROLES.forEach(function(role){
         var names=(res[role]||[]).filter(function(x){return x;});
