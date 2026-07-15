@@ -163,10 +163,15 @@ input, textarea {
    The three dots are the element itself + its ::before/::after, so every
    existing `<div class="big-spin"></div>` call site keeps working untouched. */
 .init-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:calc(100svh - var(--hdr-space));padding:0}
-.big-spin{position:relative;width:12px;height:12px;border-radius:50%;background:#e8b84b;margin:0 auto 24px;animation:dotBounce .9s cubic-bezier(.34,1.56,.64,1) .13s infinite}
-.big-spin::before,.big-spin::after{content:'';position:absolute;top:0;width:12px;height:12px;border-radius:50%;background:#e8b84b;animation:dotBounce .9s cubic-bezier(.34,1.56,.64,1) infinite}
-.big-spin::before{left:-20px;animation-delay:0s}
-.big-spin::after{left:20px;animation-delay:.26s}
+/* Three real spans, like the volunteer app. The pseudo-element version had the
+   container itself animating, so ::before/::after — being its children — got the
+   parent's transform compounded onto their own. Container is now static.
+   transform-origin:center bottom is what keeps the squash grounded: the bottom
+   edge stays planted instead of the whole dot shrinking around its middle. */
+.big-spin{display:flex;align-items:flex-end;justify-content:center;gap:8px;width:auto;height:32px;background:none;border:none;border-radius:0;margin:0 auto 24px;animation:none}
+.big-spin span{width:12px;height:12px;border-radius:50%;background:#e8b84b;transform-origin:center bottom;animation:dotBounce .9s cubic-bezier(.34,1.56,.64,1) infinite}
+.big-spin span:nth-child(2){animation-delay:.13s}
+.big-spin span:nth-child(3){animation-delay:.26s}
 .big-spin-lbl{font-size:15px;color:#8890aa;animation:ldPulse 1.3s ease-in-out infinite}
 @keyframes dotBounce{
   0%   { transform:translateY(0) scale(1,1); }
@@ -381,6 +386,11 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .rs-dd-item:active{background:rgba(255,255,255,.06)}
 .rs-dd-item.selected{color:#e8b84b}
 .rs-dd-item.warn-item{color:#f87171}
+/* Blocked = the volunteer marked this date unavailable. No onmousedown is
+   rendered at all, so it's unpickable rather than merely discouraged. */
+.rs-dd-item.blk-item{opacity:.45;cursor:not-allowed}
+.rs-dd-item.blk-item span:first-child{text-decoration:line-through;text-decoration-color:#f87171}
+.rs-dd-item.blk-item .rs-dd-cnt{color:#f87171;text-decoration:none}
 .rs-dd-cnt{font-size:11px;color:#4a5070;flex-shrink:0}
 .rs-dd-empty{padding:10px 12px;font-size:13px;color:#4a5070;text-align:center}
 
@@ -621,7 +631,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
   </div>
 
   <div class="lock-load" id="lock-load">
-    <div class="big-spin"></div>
+    <div class="big-spin"><span></span><span></span><span></span></div>
     <div class="big-spin-lbl">Menyiapkan data…</div>
   </div>
 </div>
@@ -741,6 +751,7 @@ var API_PARAM_MAP = {
   getMonthStatus:    ['dept','year','month'],
   setMonthStatus:    ['dept','year','month','status'],
   saveServiceRoster: ['dept','dateStr','service','time','dayName','rosterJson','isSpecial'],
+  saveManyRosters:   ['dept','servicesJson'],
   deleteService:     ['dept','dateStr','service','time'],
   getNotes:          ['dept'],
   saveNote:          ['dept','idx','tanggal','judul','isi','oleh'],
@@ -764,7 +775,7 @@ var API_PARAM_MAP = {
 // the key sent but must NOT have it overwritten by the stored ADMIN_KEY var.
 // All of these go over POST so the key never sits in a URL query string or
 // server log, even for the "read" (getAdminData).
-var API_KEY_REQUIRED = ['verifyKey','getAdminData','saveServiceRoster','deleteService','saveNote','deleteNote','setMonthStatus','getAvailabilityMatrix','setAvailStatus','saveSonglist','deleteSonglist','saveDresscode','getSelfieQueue','approveSelfie'];
+var API_KEY_REQUIRED = ['verifyKey','getAdminData','saveServiceRoster','saveManyRosters','deleteService',
 
 // Access key held only in sessionStorage (cleared when the tab closes).
 // It is attached to every gated request; the Apps Script backend (ADMIN_KEY
@@ -1474,6 +1485,18 @@ function getCountExcl(name){
 }
 function isOverLimit(name){return name&&getCountExcl(name)>=6;}
 
+/* ── AVAILABILITY GATE ──
+   st.data.blocked = { name: [5,12,19] } for the loaded month (from Ketersediaan).
+   A blocked person can't be picked in the dropdown and is skipped by auto-assign.
+   Note this is month-scoped: st.data is the CURRENT month, so a slot from another
+   month can't be checked — chMonth reloads, so in practice they always match. */
+function isBlocked_(name,dateStr){
+  if(!name||!dateStr)return false;
+  var days=((st.data&&st.data.blocked)||{})[name];
+  if(!days||!days.length)return false;
+  return days.indexOf(parseInt(dateStr.split("-")[2],10))!==-1;
+}
+
 function onSelectChange(role,idx,val){
   if(!st.rosterState[role])st.rosterState[role]=[""];
   st.rosterState[role][idx]=val;
@@ -1527,7 +1550,13 @@ function filterDd(role,idx,query){
   var h="";
   if(!filtered.length){h='<div class="rs-dd-empty">Tidak ditemukan</div>';}
   else{
+    var slotDate=st.currentSlot&&st.currentSlot.date;
     filtered.forEach(function(m){
+      if(isBlocked_(m.name,slotDate)){
+        h+='<div class="rs-dd-item blk-item"><span>'+esc(m.name)+'</span>'+
+           '<span class="rs-dd-cnt">Tidak bisa</span></div>';   // no onmousedown → unpickable
+        return;
+      }
       var cnt=getCountExcl(m.name);
       var warnCls=cnt>=6?" warn-item":"";
       var selCls=m.name===currentVal?" selected":"";
@@ -1768,16 +1797,22 @@ function applyGroup(){
   var groups=st.data&&st.data.groups?st.data.groups:{};
   var group=groups[groupName];
   if(!group){showToast("Group tidak ditemukan.","warn");return;}
-  var GROUP_ROLES=["WL","Singer","Keys","Guitar","Bass","Drums"];
-  GROUP_ROLES.forEach(function(role){
+  var slotDate=st.currentSlot&&st.currentSlot.date;
+  var skipped=[];
+  GROUP_ROLES_JS.forEach(function(role){
     st.rosterState[role]=[""]; // clear first so stale names from a previous group don't linger
-    if(group[role]&&group[role].length){
-      st.rosterState[role]=group[role].slice();
-    }
+    var names=(group[role]||[]).filter(function(n){
+      if(!n)return false;
+      if(isBlocked_(n,slotDate)){skipped.push(n);return false;}   // blocked member → left blank
+      return true;
+    });
+    if(names.length)st.rosterState[role]=names;
   });
   st.dirty=true;updateSaveBtn();
   renderRosterPage();
-  showToast(groupName+" diterapkan.","ok");
+  showToast(skipped.length
+    ? (groupName+" diterapkan — "+skipped.join(", ")+" tidak bisa (dikosongkan).")
+    : (groupName+" diterapkan."), skipped.length?"warn":"ok");
 }
 
 /* ── AUTO ASSIGN (group-based) ──
@@ -1793,9 +1828,12 @@ function buildGroupRoster(groupName, slot){
   var group  = groups[groupName] || {};
   var result = {};
 
-  // Band roles straight from the group (all members listed for that role).
+// Band roles straight from the group — minus anyone who blocked this date.
+  // Per spec, a blocked member is simply left blank rather than substituted;
+  // the group stays cohesive and the admin fills the gap by hand.
   GROUP_ROLES_JS.forEach(function(role){
-    result[role] = (group[role] && group[role].length) ? group[role].slice() : [""];
+    var names = (group[role] || []).filter(function(n){ return n && !isBlocked_(n, slot.date); });
+    result[role] = names.length ? names : [""];
   });
 
   // Mark everyone the group already placed as used, so a band member isn't
@@ -1817,7 +1855,7 @@ function buildGroupRoster(groupName, slot){
   });
   PAW_ROLES.forEach(function(role){
     if(GROUP_ROLES_JS.indexOf(role)!==-1) return; // band already done
-    var cands=(pool[role]||[]).filter(function(n){return !used[n];});
+    var cands=(pool[role]||[]).filter(function(n){return !used[n]&&!isBlocked_(n,slot.date);});
     cands.sort(function(a,b){return (cntMap[a]||0)-(cntMap[b]||0);});
     var picked=[];
     if(cands.length){ picked.push(cands[0]); used[cands[0]]=true; }
@@ -1850,7 +1888,7 @@ function buildPersonRoster(slot){
   roles.sort(function(a,b){ return (pool[a]||[]).length-(pool[b]||[]).length; });
 
   roles.forEach(function(role){
-    var cands=(pool[role]||[]).filter(function(n){return !used[n];});
+    var cands=(pool[role]||[]).filter(function(n){return !used[n]&&!isBlocked_(n,slot.date);});
     cands.sort(function(a,b){return (cntMap[a]||0)-(cntMap[b]||0);});
     if(cands.length){
       var pick=cands[0];
@@ -1873,47 +1911,56 @@ function autoAssignAll(){
   if(isPaw && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
   var emptySlots=st.slots.filter(function(s){return countFilled(s)===0;});
   if(!emptySlots.length){showToast("Semua sudah terisi! 🎉","ok");return;}
-  var msg=isPaw
+
+  var msg=(isPaw
     ? ("Mengisi "+emptySlots.length+" ibadah kosong — band diisi per group secara bergiliran.")
-    : ("Mengisi "+emptySlots.length+" ibadah kosong — tiap peran diisi orang paling jarang bertugas.");
+    : ("Mengisi "+emptySlots.length+" ibadah kosong — tiap peran diisi orang paling jarang bertugas."))
+    +" Volunteer yang blokir tanggalnya dilewati.";
+
   showModal("Auto Assign Semua",msg,"Lanjutkan",function(){
-    var total=emptySlots.length,done=0,failed=0;
-    showToast("Menyimpan "+total+" ibadah…","ok");
-    emptySlots.forEach(function(slot,idx){
-      var res=isPaw
-        ? buildGroupRoster(groupNames[Math.floor(Math.random()*groupNames.length)],slot)
-        : buildPersonRoster(slot);
+    // Rotate groups instead of picking at random — random repeats and starves.
+    var gi=Math.floor(Math.random()*Math.max(1,groupNames.length));
+    var payload=[],built=[];
+    emptySlots.forEach(function(slot){
+      var res=isPaw ? buildGroupRoster(groupNames[gi++ % groupNames.length],slot) : buildPersonRoster(slot);
       var clean={};
       PAW_ROLES.forEach(function(role){
         var names=(res[role]||[]).filter(function(x){return x;});
         if(names.length)clean[role]=names;
       });
-      google.script.run
-        .withSuccessHandler(function(r){
-          done++;
-          if(r&&r.ok){
-            slot.slots={};
-            Object.keys(clean).forEach(function(role){slot.slots[role]=clean[role].map(function(n){return{name:n};});});
-          } else {
-            failed++;
-          }
-          if(done===total){
-            renderJadwal();
-            showToast(failed?("Selesai, "+failed+" gagal disimpan."):("Auto assign "+total+" ibadah selesai."),failed?"warn":"ok");
-          }
-        })
-        .withFailureHandler(function(e){
-          done++;failed++;
-          if(done===total){
-            renderJadwal();
-            showToast("Selesai, "+failed+" gagal disimpan.","warn");
-          }
-        })
-        .saveServiceRoster(slot.date,slot.service,slot.time,slot.day,JSON.stringify(clean),!!slot.isSpecial);
+      payload.push({dateStr:slot.date,service:slot.service,time:slot.time,dayName:slot.day,roster:clean,isSpecial:!!slot.isSpecial});
+      built.push({slot:slot,clean:clean});
     });
+
+    var btn=document.querySelector(".auto-all-btn");
+    if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
+    showToast("Menyimpan "+payload.length+" ibadah…","ok");
+
+    // ONE request for the whole month. The old code fired one per service in
+    // parallel; those executions raced on the same sheet and ate each other's rows.
+    google.script.run
+      .withSuccessHandler(function(r){
+        if(btn){btn.disabled=false;btn.textContent="Auto Assign Semua";}
+        if(r&&r.ok){
+          built.forEach(function(b){
+            b.slot.slots={};
+            Object.keys(b.clean).forEach(function(role){
+              b.slot.slots[role]=b.clean[role].map(function(n){return{name:n,sub:""};});
+            });
+          });
+          renderJadwal();
+          showToast("Auto assign "+payload.length+" ibadah selesai.","ok");
+        } else {
+          showToast((r&&r.msg)||"Gagal menyimpan.","err");
+        }
+      })
+      .withFailureHandler(function(e){
+        if(btn){btn.disabled=false;btn.textContent="Auto Assign Semua";}
+        showToast("Gagal: "+(e&&e.message||e),"err");
+      })
+      .saveManyRosters(JSON.stringify(payload));
   });
 }
-
 /* ── SAVE ROSTER ── */
 // ── SONGLIST EDITOR (PAW only, per service) ──────────────────
 function renderSonglistEditor(){ renderSonglistEditorInto("sl-body"); }
