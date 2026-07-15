@@ -26,6 +26,8 @@
 
 :root {
   --page-pad: 25px;
+  --gate-top: 9svh;    /* how far down the gate content starts — smaller = higher up the page */
+  --hdr-space: 190px;  /* header + bottom padding the full-page loader discounts when centering */
 }
 
 html {
@@ -90,7 +92,13 @@ input, textarea {
 .dr{position:fixed;left:0;top:0;bottom:0;z-index:200;width:264px;background:#12151c;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);padding-top:env(safe-area-inset-top,0px)}
 .dr.on{transform:translateX(0)}
 .dr-top{display:flex;align-items:center;gap:11px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
-.dr-ring{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dr-ring{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;animation:logoThrob 2.8s ease-in-out infinite}
+/* box-shadow ripple rather than a ::after ring — the logo's own overflow:hidden
+   would clip a pseudo-element, but never its own shadow. */
+@keyframes logoThrob{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(232,184,75,.45)}
+  50%    {transform:scale(1.07);box-shadow:0 0 0 7px rgba(232,184,75,0)}
+}
 .dr-ring img{width:100%;height:100%;object-fit:cover;display:none}
 .dr-church{font-size:10px;color:#8890aa;letter-spacing:.06em;text-transform:uppercase}
 .dr-team{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;line-height:1.3;margin-top:1px}
@@ -133,6 +141,14 @@ input, textarea {
 .dept-pill-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0}
 .dept-pill-icon svg{width:100%;height:100%;display:block}
 .dept-pill-name{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+
+/* Scoped to #dept-pill, NOT .dept-pill — the gate dropdown reuses the same class
+   and its options must stay still. The halo borrows currentColor, so it picks up
+   each dept's own color from setDeptHeader() for free. */
+#dept-pill{position:relative;animation:pillThrob 2.6s ease-in-out infinite}
+#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) infinite}
+@keyframes pillThrob{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes pillHalo{0%{opacity:.5;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.3)}}
 
         /* Big loader (full-page: jadwal / ringkasan / catatan) */
 .big-spin{display:flex;gap:8px;justify-content:center;align-items:flex-end;height:30px;margin:0 auto 14px}
@@ -482,7 +498,10 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 }
 .empty-ico{margin-bottom:10px}
 .empty-msg{font-size:14px;color:#8890aa;line-height:1.6}
-.loading{text-align:center;padding:48px 0;animation:loadPop .22s cubic-bezier(.22,1,.36,1) both}
+/* Full-page loaders (Jadwal / Ringkasan / Catatan / Ketersediaan) all share this
+   class, so centering here lands them at the same spot as the splash + gate loader
+   instead of hanging near the top. */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:calc(100svh - var(--hdr-space));padding:0;animation:loadPop .22s cubic-bezier(.22,1,.36,1) both}
 @keyframes loadPop{
   0%{ opacity:0; transform:scale(.9); }
   100%{ opacity:1; transform:scale(1); }
@@ -494,8 +513,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ONBOARDING GATE ──────── */
-.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:center;justify-content:center;padding:28px var(--page-pad);opacity:1;transition:opacity .4s cubic-bezier(.22,1,.36,1)}
-.gate.closing{opacity:0;pointer-events:none}
+.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;opacity:1;transition:opacity .4s cubic-bezier(.22,1,.36,1)}
 .gate-inner{width:100%;max-width:360px;animation:gatePop .46s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes gatePop{
   0%  { opacity:0; transform:scale(.9) translateY(16px); }
