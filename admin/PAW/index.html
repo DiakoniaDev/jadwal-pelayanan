@@ -26,8 +26,9 @@
 
 :root {
   --page-pad: 25px;
+  --hdr-space: 200px;  /* header + padding the centered loader discounts */
 }
-
+        
 html {
   -webkit-text-size-adjust: 100%;
   background: #0a0c10;
@@ -76,8 +77,13 @@ input, textarea {
 .dr{position:fixed;left:0;top:0;bottom:0;z-index:200;width:260px;background:#12151c;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);padding-top:env(safe-area-inset-top,0px)}
 .dr.on{transform:translateX(0)}
 .dr-top{display:flex;align-items:center;gap:11px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
-.dr-ring{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.dr-ring img{width:100%;height:100%;object-fit:cover;display:none}
+.dr-ring{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;animation:logoThrob 2.8s ease-in-out infinite}
+/* box-shadow ripple, not a ::after ring — the logo's own overflow:hidden would
+   clip a pseudo-element, but never its own shadow. */
+@keyframes logoThrob{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(232,184,75,.45)}
+  50%    {transform:scale(1.07);box-shadow:0 0 0 7px rgba(232,184,75,0)}
+}
 .dr-ring svg{width:19px;height:19px}
 .dr-sub{font-size:10px;color:#8890aa;letter-spacing:.06em;text-transform:uppercase}
 .dr-title{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;line-height:1.3;margin-top:1px}
@@ -112,38 +118,67 @@ input, textarea {
 
 /* ── HEADER ── */
 .hdr{
-  position:sticky;
-  top:0;
-  z-index:40;
-  background:linear-gradient(180deg,#12151c 85%,transparent);
-  border-bottom:1px solid rgba(255,255,255,.06);
-  padding:24px var(--page-pad) 14px;
+  position:sticky;top:0;z-index:40;
+  background:#12151c;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding:28px var(--page-pad) 20px;
   margin-bottom:22px;
   width:100%;
-  animation:fadeUp .5s cubic-bezier(.22,1,.36,1) both;
+  transform-origin:top center;
+  animation:hdrSlideIn .5s cubic-bezier(.22,1,.36,1) both;
 }
-.hdr-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
-.menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-top:2px}
+@keyframes hdrSlideIn{
+  0%  { opacity:0; transform:translateY(-46px) scaleY(.9); }
+  60% { opacity:1; transform:translateY(4px) scaleY(1.02); }
+  100%{ transform:translateY(0) scaleY(1); }
+}
+.hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:0}
+.menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-left:-8px}
 .menu-btn:active{background:rgba(255,255,255,.08)}
 .hdr-text{flex:1;min-width:0}
-.hdr-badge{display:inline-flex;align-items:center;background:rgba(244,160,110,.15);color:#f4a06e;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:7px;flex-shrink:0;margin-top:5px}
-.hdr-title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;line-height:1;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-sub{font-size:10px;color:#8890aa;letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
-.hdr-logo{width:36px;height:36px;border-radius:50%;background:#e8b84b;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;animation:logoBreathe 3.5s ease-in-out infinite;margin-top:2px}
-@keyframes logoBreathe{
-  0%,100%{ box-shadow:0 0 0px 0px rgba(232,184,75,0);background:#e8b84b; }
-  50%    { box-shadow:0 0 16px 6px rgba(232,184,75,.5);background:#f2ca52; }
+.hdr-l1{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;line-height:1.22;letter-spacing:-.02em;color:#f0f0f5}
+
+/* department pill — identical shape/colour/icon system to the volunteer app */
+.dept-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 13px 7px 9px;border-radius:11px;flex-shrink:0}
+.dept-pill-icon{display:flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0}
+.dept-pill-icon svg{width:100%;height:100%;display:block}
+.dept-pill-name{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+
+/* Slides in once, then hands transform over to pillThrob. Scoped to #dept-pill,
+   NOT .dept-pill — the lock dropdown reuses the class and must stay still. */
+#dept-pill{position:relative;animation:deptSlideIn .55s cubic-bezier(.22,1,.36,1) both, pillThrob 2.6s ease-in-out .55s infinite}
+#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) .55s infinite}
+@keyframes deptSlideIn{
+  0%  {opacity:0;transform:translateX(48px) scale(.9)}
+  62% {opacity:1;transform:translateX(-4px) scale(1.03)}
+  100%{opacity:1;transform:translateX(0) scale(1)}
 }
-.hdr-logo img{width:100%;height:100%;object-fit:cover;display:none;opacity:0;transition:opacity .4s ease}
-.hdr-logo img.loaded{opacity:1}
+@keyframes pillThrob{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes pillHalo{0%{opacity:.5;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.3)}}
 
 /* ── CONTENT ── */
 .content{flex:1;padding-left:var(--page-pad);padding-right:var(--page-pad);padding-bottom:calc(env(safe-area-inset-bottom,0px)+80px);box-sizing:border-box;overflow-x:hidden}
 
-/* ── LOADING ── */
-.init-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;text-align:center}
-.big-spin{width:36px;height:36px;border-radius:50%;border:3px solid #222737;border-top-color:#e8b84b;animation:spin .7s linear infinite;margin:0 auto 16px}
-.big-spin-lbl{font-size:15px;color:#8890aa}
+/* ── LOADING — dot-bounce, same as the volunteer app ──
+   The three dots are the element itself + its ::before/::after, so every
+   existing `<div class="big-spin"></div>` call site keeps working untouched. */
+.init-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:calc(100svh - var(--hdr-space));padding:0}
+.big-spin{position:relative;width:12px;height:12px;border-radius:50%;background:#e8b84b;margin:0 auto 24px;animation:dotBounce .9s cubic-bezier(.34,1.56,.64,1) .13s infinite}
+.big-spin::before,.big-spin::after{content:'';position:absolute;top:0;width:12px;height:12px;border-radius:50%;background:#e8b84b;animation:dotBounce .9s cubic-bezier(.34,1.56,.64,1) infinite}
+.big-spin::before{left:-20px;animation-delay:0s}
+.big-spin::after{left:20px;animation-delay:.26s}
+.big-spin-lbl{font-size:15px;color:#8890aa;animation:ldPulse 1.3s ease-in-out infinite}
+@keyframes dotBounce{
+  0%   { transform:translateY(0) scale(1,1); }
+  12%  { transform:translateY(0) scale(1.3,.7); }
+  30%  { transform:translateY(-20px) scale(.8,1.25); }
+  50%  { transform:translateY(-20px) scale(.8,1.25); }
+  68%  { transform:translateY(0) scale(1.3,.7); }
+  82%  { transform:translateY(0) scale(.92,1.08); }
+  100% { transform:translateY(0) scale(1,1); }
+}
+@keyframes ldPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 /* ── MONTH NAV — centered, yellow, auto below ── */
 .month-nav-wrap{margin-top:8px;margin-bottom:28px}
@@ -527,6 +562,26 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .lock-spin{width:16px;height:16px;border:2px solid rgba(10,12,16,.35);border-top-color:#0a0c10;border-radius:50%;display:inline-block;vertical-align:middle;animation:lock-spin .7s linear infinite}
 @keyframes lock-spin{to{transform:rotate(360deg)}}
 
+/* ── LOCK LOADING OVERLAY ── */
+.lock-load{position:absolute;inset:0;z-index:10;background:#0a0c10;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s ease}
+.lock-load.off{opacity:0;pointer-events:none}
+.lock-load .big-spin{margin:0 auto 24px}
+.lock-load .init-loading{min-height:0}
+
+/* ── DEPT PICKER — real dept pills, which a native <select> can't render ── */
+.dept-pick{position:relative;width:100%}
+.dept-trig{width:100%;min-height:56px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 16px 9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.dept-trig.on{border-color:rgba(232,184,75,.55);box-shadow:0 0 0 3px rgba(232,184,75,.1)}
+.dept-trig-ph{font-size:16px;color:#4a5168;padding-left:4px}
+.dept-trig-chev{margin-left:auto;color:#8890aa;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
+.dept-trig.on .dept-trig-chev{transform:rotate(180deg)}
+.dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:120;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:6px;max-height:264px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;box-shadow:0 14px 44px rgba(0,0,0,.75);animation:popIn .16s cubic-bezier(.34,1.5,.64,1) both;text-align:left}
+.dept-opt{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px;cursor:pointer;transition:background .1s}
+.dept-opt:active{background:#1a1e28}
+.dept-opt.sel{background:var(--d-bg,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--d-fg,transparent)}
+.dept-opt-check{margin-left:auto;color:var(--d-fg,#e8b84b);flex-shrink:0;opacity:0;transition:opacity .12s}
+.dept-opt.sel .dept-opt-check{opacity:1}
+
 .lock-input-wrap{position:relative;width:100%}
 .lock-input-wrap .lock-input{padding-right:46px}
 .lock-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:none;color:#8890aa;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;transition:color .15s}
@@ -546,9 +601,13 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
     <div class="lock-title">Admin GMS</div>
     <div class="lock-sub">Masukkan password untuk melanjutkan</div>
     <form class="lock-form" id="lock-form" onsubmit="return submitKey(event)">
-      <select class="lock-input" id="lock-dept" style="margin-bottom:10px;-webkit-appearance:none;appearance:none;cursor:pointer">
-        <option value="">Pilih Departemen…</option>
-      </select>
+      <div class="dept-pick" style="margin-bottom:10px">
+        <div class="dept-trig" id="lock-dept-trig" onclick="toggleDeptMenu(event)">
+          <span id="lock-dept-body"><span class="dept-trig-ph">Pilih departemen…</span></span>
+          <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </div>
+        <div class="dept-menu" id="lock-dept-menu"></div>
+      </div>
 <div class="lock-input-wrap">
         <input class="lock-input" id="lock-input" type="password" inputmode="text"
                autocomplete="current-password" placeholder="Password" aria-label="Password">
@@ -559,6 +618,11 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
       <div class="lock-err" id="lock-err"></div>
       <button class="lock-btn" id="lock-btn" type="submit">Masuk</button>
     </form>
+  </div>
+
+  <div class="lock-load" id="lock-load">
+    <div class="big-spin"></div>
+    <div class="big-spin-lbl">Menyiapkan data…</div>
   </div>
 </div>
 
@@ -588,9 +652,13 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
   <div class="hdr">
     <div class="hdr-top">
       <button class="menu-btn" onclick="openDr()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-      <div class="hdr-text"><div class="hdr-title" id="hdr-title">Admin</div><div class="hdr-badge" id="hdr-dept-badge">—</div></div>
-      <div class="hdr-logo" id="hdr-logo"><img id="hdr-logo-img" src="" alt="" style="display:none"></div>
-    </div>
+      <div class="hdr-text">
+        <div class="hdr-l1" id="hdr-l1">Admin<br>Panel</div>
+      </div>
+      <div class="dept-pill" id="dept-pill" style="display:none">
+        <span class="dept-pill-icon" id="dept-pill-icon"></span>
+        <span class="dept-pill-name" id="dept-pill-name"></span>
+      </div>
   </div>
   <div class="content" id="content">
     <div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat data…</div></div>
@@ -754,14 +822,129 @@ function handleAuth(data){
   return data;
 }
 
+/* ── DEPARTMENT META — keep in sync with index.html ──
+   PAW is deliberately rust/burnt orange (not amber) so it never blurs into the
+   SPV/MD/Sequencer/SD role chips, which are already amber-orange. */
+var DEPT_META = {
+  "PAW":      {fg:"#e0793a", bg:"rgba(224,121,58,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>'},
+  "MM":       {fg:"#5b8cf4", bg:"rgba(91,140,244,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>'},
+  "Sound":    {fg:"#aab2c5", bg:"rgba(170,178,197,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><rect x="17" y="14" width="4" height="7" rx="2"/><rect x="3" y="14" width="4" height="7" rx="2"/></svg>'},
+  "CM":       {fg:"#f4685b", bg:"rgba(244,104,91,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>'}
+};
+var DEPT_FALLBACK={fg:"#8890aa",bg:"rgba(136,144,170,.16)",
+  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>'};
+
+function deptMeta(d){ return DEPT_META[d] || DEPT_FALLBACK; }
+
+function deptPillHTML(dept){
+  var m=deptMeta(dept);
+  return '<span class="dept-pill" style="background:'+m.bg+';color:'+m.fg+'">'+
+    '<span class="dept-pill-icon">'+m.icon+'</span>'+
+    '<span class="dept-pill-name">'+esc(dept)+'</span></span>';
+}
+
+function setDeptHeader(dept){
+  var pill=document.getElementById("dept-pill");
+  if(!pill)return;
+  if(!dept){pill.style.display="none";return;}
+  var m=deptMeta(dept);
+  pill.style.display="inline-flex";
+  pill.style.background=m.bg;
+  pill.style.color=m.fg;   // the ::after halo borrows currentColor for free
+  document.getElementById("dept-pill-icon").innerHTML=m.icon;
+  document.getElementById("dept-pill-name").textContent=dept;
+}
+
+function titleTwoLines(text){
+  var p=String(text||"").trim().split(/\s+/);
+  if(p.length<=1)return esc(text);
+  var mid=Math.ceil(p.length/2);
+  return esc(p.slice(0,mid).join(" "))+"<br>"+esc(p.slice(mid).join(" "));
+}
+
+/* ── LOCK DEPT PICKER ── */
+var LOCK_DEPTS=[], LOCK_DEPT="";
+
+function toggleDeptMenu(e){
+  if(e)e.stopPropagation();   // keep the document-click closer from firing on us
+  var menu=document.getElementById("lock-dept-menu"),trig=document.getElementById("lock-dept-trig");
+  if(!menu||!trig)return;
+  var open=menu.style.display!=="block";
+  menu.style.display=open?"block":"none";
+  trig.classList.toggle("on",open);
+}
+function hideDeptMenu(){
+  var menu=document.getElementById("lock-dept-menu"),trig=document.getElementById("lock-dept-trig");
+  if(menu)menu.style.display="none";
+  if(trig)trig.classList.remove("on");
+}
+function pickLockDept(d){ hideDeptMenu(); setLockDept_(d); }
+
+function setLockDept_(d){
+  LOCK_DEPT=d;
+  var body=document.getElementById("lock-dept-body");
+  if(body)body.innerHTML=d?deptPillHTML(d):'<span class="dept-trig-ph">Pilih departemen…</span>';
+  LOCK_DEPTS.forEach(function(x){
+    var o=document.getElementById("dopt-"+safeId(x));
+    if(o)o.classList.toggle("sel",x===d);
+  });
+}
+
+function buildDeptMenu_(depts){
+  LOCK_DEPTS=depts||[];
+  var menu=document.getElementById("lock-dept-menu");
+  if(menu){
+    menu.innerHTML=LOCK_DEPTS.map(function(d){
+      var m=deptMeta(d);
+      return '<div class="dept-opt" id="dopt-'+safeId(d)+'" style="--d-fg:'+m.fg+';--d-bg:'+m.bg+'" onclick="pickLockDept(\''+escQ(d)+'\')">'+
+        deptPillHTML(d)+
+        '<span class="dept-opt-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>'+
+      '</div>';
+    }).join('');
+  }
+  prefillLockFromMemory_();
+  hideLockLoader_();
+}
+
+function hideLockLoader_(){
+  var el=document.getElementById("lock-load");
+  if(!el||el.classList.contains("off"))return;
+  el.classList.add("off");
+  setTimeout(function(){el.style.display="none";},400);
+}
+
+/* Memory PREFILLS the lock — it no longer walks straight in. The admin still
+   taps Masuk, so a refresh mid-task can't dump them into a page they didn't
+   ask for. The key comes from sessionStorage (same tab, same session, put
+   there by this admin) — drop the two `inp.value` lines if you'd rather retype. */
+function prefillLockFromMemory_(){
+  if(!ADMIN_DEPT || LOCK_DEPTS.indexOf(ADMIN_DEPT)===-1) return;
+  setLockDept_(ADMIN_DEPT);
+  var inp=document.getElementById("lock-input");
+  if(inp && ADMIN_KEY) inp.value=ADMIN_KEY;
+}
+
+document.addEventListener("click",function(e){ if(!e.target.closest(".dept-pick"))hideDeptMenu(); });
+document.addEventListener("touchstart",function(e){ if(!e.target.closest(".dept-pick"))hideDeptMenu(); },{passive:true});
+
+        
 // ── LOGIN GATE CONTROLLER ───────────────────────────────────
+// msg is only passed on a REJECTION (wrong key / expired session) — that's the
+// one case where the field should be cleared. The initLock call passes nothing,
+// so a prefilled key survives.
 function showLock(msg){
   var lock = document.getElementById('lock');
   if (lock) lock.classList.remove('hide');
   var err = document.getElementById('lock-err');
   if (err) err.textContent = msg || '';
-  var inp = document.getElementById('lock-input');
-  if (inp){ inp.value=''; try{ inp.focus(); }catch(e){} }
+  if (msg){
+    var inp = document.getElementById('lock-input');
+    if (inp){ inp.value=''; try{ inp.focus(); }catch(e){} }
+  }
 }
 function hideLock(){
   var lock = document.getElementById('lock');
@@ -776,10 +959,9 @@ function setLockBusy(busy){
 function submitKey(ev){
   if (ev) ev.preventDefault();
   var inp  = document.getElementById('lock-input');
-  var dsel = document.getElementById('lock-dept');
   var err  = document.getElementById('lock-err');
   var key  = inp ? inp.value.trim() : '';
-  var dept = dsel ? dsel.value : '';
+  var dept = LOCK_DEPT;
   if (!dept){ if(err) err.textContent='Pilih departemen dulu.'; return false; }
   if (!key){ if(err) err.textContent='Password tidak boleh kosong.'; return false; }
   if (err) err.textContent='';
@@ -791,7 +973,9 @@ function submitKey(ev){
       setAdminKey(key);
       applyDeptLabels();
       hideLock();
-      loadData(); // key is valid now — (re)load the admin data it gates
+      // The eager load below the shim may already have this dept's data warm —
+      // skip the round trip so Masuk lands instantly instead of re-fetching.
+      if (st.loaded && st.dept === dept) renderTab(); else loadData();
     } else {
       setAdminKey('');
       if (err) err.textContent = (data && data.message) || 'Password salah.';
@@ -807,10 +991,9 @@ function submitKey(ev){
 // Sets the header/drawer/title to the active dept. Called after login and on
 // silent-resume. Kept separate so onDataLoaded doesn't fight it.
 function applyDeptLabels(){
-  var t = ADMIN_DEPT ? ("Admin " + ADMIN_DEPT) : "Admin";
-  var h = document.getElementById('hdr-title'); if (h) h.textContent = t;
-  var d = document.getElementById('dr-title');  if (d) d.textContent = t;
-  var b = document.getElementById('hdr-dept-badge'); if (b) b.textContent = ADMIN_DEPT || "";
+  var h = document.getElementById('hdr-l1'); if (h) h.innerHTML = titleTwoLines("Admin Panel");
+  var d = document.getElementById('dr-title'); if (d) d.textContent = ADMIN_DEPT ? ("Admin " + ADMIN_DEPT) : "Admin";
+  setDeptHeader(ADMIN_DEPT);
   var selfieNav = document.getElementById('dn-selfie');
   if (selfieNav) selfieNav.style.display = (ADMIN_DEPT === 'CM') ? 'flex' : 'none';
   var dressNav = document.getElementById('dn-dresscode');
@@ -819,34 +1002,24 @@ function applyDeptLabels(){
   if (songNav) songNav.style.display = (ADMIN_DEPT === 'PAW') ? 'flex' : 'none';
 }
 
-// Populate the login dept dropdown from getConfig (fixed list, no key needed).
+// Populate the login dept picker from getConfig (fixed list, no key needed).
+// The loader stays up until this lands, so the dropdown can't be tapped before
+// its options exist.
+var FALLBACK_DEPTS = ["PAW","Sound","MM","CM"];
 function populateLoginDepts(){
-  var sel = document.getElementById('lock-dept');
-  if (!sel) return;
   callApi('getConfig', []).then(function(c){
-    var depts = (c && c.departments) || ["PAW","Sound","MM","CM"];
-    depts.forEach(function(d){
-      var o=document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o);
-    });
-    if (ADMIN_DEPT) sel.value = ADMIN_DEPT;
+    buildDeptMenu_((c && c.departments) || FALLBACK_DEPTS);
   }).catch(function(){
-    ["PAW","Sound","MM","CM"].forEach(function(d){
-      var o=document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o);
-    });
+    buildDeptMenu_(FALLBACK_DEPTS);
   });
 }
-// On load: if a key is already stored this session, verify it silently and
-// skip the prompt; otherwise show the lock. Reads have already begun behind it.
+
+// On load: always show the lock. A stored session only PREFILLS it — the admin
+// still taps Masuk. No more silent auto-entry on refresh.
 (function initLock(){
+  showLock();
   populateLoginDepts();
-  if (ADMIN_KEY && ADMIN_DEPT){
-    callApi('verifyKey', [ADMIN_DEPT, ADMIN_KEY]).then(function(data){
-      if (data && data.ok){ applyDeptLabels(); hideLock(); }
-      else { setAdminKey(''); showLock(); }
-    }).catch(function(){ showLock(); });
-  } else {
-    showLock();
-  }
+  setTimeout(hideLockLoader_, 8000);   // a dead API must never trap them behind the loader
 })();
 
 function GasRun(){ this._s=null; this._f=null; }
