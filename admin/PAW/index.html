@@ -26,7 +26,7 @@
 
 :root {
   --page-pad: 25px;
-  --hdr-space: 200px;  /* header + padding the centered loader discounts */
+  --hdr-space: 250px;  /* hdr ~110 + .page pad-bottom 60 + .content pad-bottom 80 */
 }
         
 html {
@@ -161,7 +161,7 @@ input, textarea {
 
 /* ── LOADING — dot-bounce, same as the volunteer app ──
    The three dots are the element itself + its ::before/::after, so every
-   existing `<div class="big-spin"></div>` call site keeps working untouched. */
+   existing `<div class="big-spin"><span></span><span></span><span></span></div>` call site keeps working untouched. */
 .init-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:calc(100svh - var(--hdr-space));padding:0}
 /* Three real spans, like the volunteer app. The pseudo-element version had the
    container itself animating, so ::before/::after — being its children — got the
@@ -576,7 +576,6 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .lock-load{position:absolute;inset:0;z-index:10;background:#0a0c10;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .35s ease}
 .lock-load.off{opacity:0;pointer-events:none}
 .lock-load .big-spin{margin:0 auto 24px}
-.lock-load .init-loading{min-height:0}
 
 /* ── DEPT PICKER — real dept pills, which a native <select> can't render ── */
 .dept-pick{position:relative;width:100%}
@@ -669,9 +668,10 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
         <span class="dept-pill-icon" id="dept-pill-icon"></span>
         <span class="dept-pill-name" id="dept-pill-name"></span>
       </div>
+    </div>
   </div>
   <div class="content" id="content">
-    <div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat data…</div></div>
+    <div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat data…</div></div>
   </div>
 
  
@@ -1094,7 +1094,7 @@ var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:n
 
 function loadData(){
   st.dept=ADMIN_DEPT;
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat data bulan ini…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat data bulan ini…</div></div>';
   google.script.run
     .withSuccessHandler(onDataLoaded)
     .withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="empty-state">Gagal memuat: '+esc(e.message)+'</div>';})
@@ -2062,7 +2062,7 @@ function saveDresscode(){
 // ── CM SELFIE APPROVAL QUEUE ─────────────────────────────────
 function renderSelfieQueue(){
   if(st.dept!=="CM"){document.getElementById("content").innerHTML='<div class="sq-empty">Halaman ini khusus departemen CM.</div>';return;}
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat selfie…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat selfie…</div></div>';
   callApi('getSelfieQueue',[]).then(function(res){
     st.selfieItems=(res&&res.items)||[];
     buildSelfieQueue();
@@ -2188,7 +2188,7 @@ function decideSelfie(idx,decision){
 // ── CM STANDALONE DRESSCODE PAGE ─────────────────────────────
 function renderDresscodePage(){
   if(st.dept!=="CM"){document.getElementById("content").innerHTML='<div class="dp-empty">Halaman ini khusus departemen CM.</div>';return;}
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat dresscode…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat dresscode…</div></div>';
   callApi('getDresscodeList',[st.year,st.month]).then(function(res){
     st.dressList=(res&&res.services)||[];
     buildDresscodePage();
@@ -2282,7 +2282,7 @@ function saveManualDresscode(){
 // ── PAW STANDALONE SONGLIST PAGE (keyed date|group) ──────────
 function renderSonglistPage(){
   if(st.dept!=="PAW"){document.getElementById("content").innerHTML='<div class="sq-empty">Halaman ini khusus departemen PAW.</div>';return;}
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat songlist…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat songlist…</div></div>';
   callApi('getSonglistCards',[st.year,st.month]).then(function(res){
     st.songCards=(res&&res.cards)||[];
     buildSonglistPage();
@@ -2566,7 +2566,7 @@ function saveRingkasanAsImage(){
 
 /* ── KETERSEDIAAN (AVAILABILITY) ── */
 function renderKetersediaan(){
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat ketersediaan…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat ketersediaan…</div></div>';
   google.script.run
     .withSuccessHandler(function(data){st.availData=data;buildKetersediaanUI(data);})
     .withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="empty-state">Gagal memuat: '+esc(e.message)+'</div>';})
@@ -2710,7 +2710,7 @@ var _notes=[];
 var _editingNoteIdx=null;
 
 function renderCatatan(){
-  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"></div><div class="big-spin-lbl">Memuat catatan…</div></div>';
+  document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat catatan…</div></div>';
   google.script.run
     .withSuccessHandler(function(notes){
       _notes=notes||[];
