@@ -123,8 +123,7 @@ input, textarea {
 }
 
 /* ── HEADER — 32px sides ──── */
-.hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;width:100%;transform-origin:top center;animation:hdrSlideIn .5s cubic-bezier(.22,1,.36,1) both}
-
+.hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;margin-bottom:16px;width:100%;transform-origin:top center;animation:hdrSlideIn .5s cubic-bezier(.22,1,.36,1) both}
 @keyframes hdrSlideIn{
   0%  { opacity:0; transform:translateY(-46px) scaleY(.9); }
   60% { opacity:1; transform:translateY(4px) scaleY(1.02); }
@@ -145,8 +144,16 @@ input, textarea {
 /* Scoped to #dept-pill, NOT .dept-pill — the gate dropdown reuses the same class
    and its options must stay still. The halo borrows currentColor, so it picks up
    each dept's own color from setDeptHeader() for free. */
-#dept-pill{position:relative;animation:pillThrob 2.6s ease-in-out infinite}
-#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) infinite}
+/* Slides in, then hands transform over to pillThrob. The pill starts display:none
+   and only renders when setDeptHeader() fires, so the slide plays exactly once
+   per login — no JS trigger needed. */
+#dept-pill{position:relative;animation:deptSlideIn .55s cubic-bezier(.22,1,.36,1) both, pillThrob 2.6s ease-in-out .55s infinite}
+#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) .55s infinite}
+@keyframes deptSlideIn{
+  0%  {opacity:0;transform:translateX(48px) scale(.9)}
+  62% {opacity:1;transform:translateX(-4px) scale(1.03)}
+  100%{opacity:1;transform:translateX(0) scale(1)}
+}
 @keyframes pillThrob{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 @keyframes pillHalo{0%{opacity:.5;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.3)}}
 
@@ -458,8 +465,15 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .card-tabs{display:flex;gap:4px;padding:8px 10px 0;background:#1a1e28;border-top:1px solid rgba(255,255,255,.06)}
 .card-tab{flex:1;padding:8px 0;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:#8890aa;cursor:pointer;border-radius:9px 9px 0 0;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .15s,color .15s}
 .card-tab.on{background:#12151c;color:#e8b84b}
+/* Order matters: .leaving sits after .on so its animation wins during the
+   close phase. Only ever one pane is display:block at a time — the outgoing
+   one finishes leaving before the incoming one mounts, so growRoster() never
+   measures both stacked. --pane-dx carries the direction, set per-swap in JS. */
 .card-pane{display:none;background:#12151c}
-.card-pane.on{display:block}
+.card-pane.on{display:block;animation:paneIn .24s cubic-bezier(.22,1,.36,1) both}
+.card-pane.leaving{display:block;pointer-events:none;animation:paneOut .15s cubic-bezier(.4,0,1,1) both}
+@keyframes paneIn{from{opacity:0;transform:translateX(var(--pane-dx,18px))}to{opacity:1;transform:translateX(0)}}
+@keyframes paneOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(var(--pane-dx,-18px))}}
 .song-list{display:flex;flex-direction:column;gap:8px;padding:12px 12px 14px}
 .song-row{display:flex;align-items:center;gap:10px;background:#1a1e28;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
 .song-info{flex:1;min-width:0}
@@ -808,6 +822,7 @@ var st={
   mainTab:"jadwal",
   vol:null,allEvents:[],schedTab:"jadwal",viewYear:0,viewMonth:0,monthDir:1,openKey:null,rosterCache:{},query:"",debounce:null,sugList:[],justPicked:false,
   songCache:{},dressCache:{},selfieCache:{},inflight:{},extrasLoaded:false,
+  schedCache:{},schedInflight:{},
   ringYear:0,ringMonth:0,ringCache:{},
   availOpenMonths:[],availSelYear:0,availSelMonth:0,availBlocked:{},availDirty:false,
   rolesByDept:{},structureByDept:{},
@@ -889,6 +904,7 @@ function prefillGateFromMemory_(){
   st.gateSelectedVol=match;
   hideGateSug();
   document.getElementById("gate-enter-btn").disabled=false;
+  prefetchSchedule_(match.name);   // returning person → warm it before they even tap
 }
 
 google.script.run.withSuccessHandler(function(list){
@@ -1023,6 +1039,7 @@ function pickGateVol(idx){
   document.getElementById("gate-name-inp").value=v.name;
   hideGateSug();
   document.getElementById("gate-enter-btn").disabled=false;
+  prefetchSchedule_(v.name);   // head start while they reach for Masuk
 }
 
 function enterApp(){
@@ -1048,11 +1065,37 @@ function populateDeptFilter(){
   renderDeptTrigger_(st.gateDept);
 }
         
+/* ── SCHEDULE PREFETCH ──
+   getVolunteerSchedule is the heavy one — it bundles events + rosters + extras.
+   The new gate flow hands us a free window: the person picks a name, then reads
+   the form and reaches for Masuk. Firing the request the instant they tap a name
+   means it's usually already home by the time Masuk is pressed, so the loader
+   flashes instead of hanging. If they're fast, fetchSchedule_ just piggybacks on
+   the in-flight request rather than sending a second one. */
+function fetchSchedule_(name,onOk,onErr){
+  if(st.schedCache[name]!==undefined){onOk(st.schedCache[name]);return;}
+  var w=st.schedInflight[name];
+  if(w){w.ok.push(onOk);w.err.push(onErr);return;}
+  w=st.schedInflight[name]={ok:[onOk],err:[onErr]};
+  google.script.run.withSuccessHandler(function(d){
+    st.schedCache[name]=d;delete st.schedInflight[name];
+    w.ok.forEach(function(f){try{f(d);}catch(err){console.error(err);}});
+  }).withFailureHandler(function(e){
+    delete st.schedInflight[name];
+    w.err.forEach(function(f){try{f(e);}catch(err){console.error(err);}});
+  }).getVolunteerSchedule(name);
+}
+
+function prefetchSchedule_(name){
+  if(!name)return;
+  fetchSchedule_(name,function(){},function(){});   // fire and forget — warms the cache only
+}
+
 function loginAsVol(v){
   st.vol=v;st.openKey=null;st.rosterCache={};
   showLoading();
   try{localStorage.setItem(APP_CONFIG.storagePrefix + "volName", v.name);}catch(e){console.warn("localStorage set failed",e);}
-  google.script.run.withSuccessHandler(gotEvents).withFailureHandler(function(e){showErr(e.message);}).getVolunteerSchedule(v.name);
+  fetchSchedule_(v.name,gotEvents,function(e){showErr(e.message);});
 }
 
 // Fetches the dept-scoped availability-open-months list and shows/hides the
@@ -1472,7 +1515,7 @@ function cardBody(kid,ev){
   if(!isPaw) return teamPane;
   var tabs='<div class="card-tabs">'+
     '<button class="card-tab on" id="ct-team-'+kid+'" onclick="cardTab(event,\''+kid+'\',\'team\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>Team</button>'+
-    '<button class="card-tab" id="ct-song-'+kid+'" onclick="cardTab(event,\''+kid+'\',\'song\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Lagu</button>'+
+    '<button class="card-tab" id="ct-song-'+kid+'" onclick="cardTab(event,\''+kid+'\',\'song\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Songlist</button>'+
     '<button class="card-tab" id="ct-dress-'+kid+'" onclick="cardTab(event,\''+kid+'\',\'dress\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>Dresscode</button>'+
   '</div>';
   var songPane='<div class="card-pane" id="pane-song-'+kid+'" data-loaded="0">'+paneLoadingHTML("Memuat lagu…")+'</div>';
@@ -1485,27 +1528,56 @@ function paneLoadingHTML(msg){
     '<div class="ld-txt">'+esc(msg)+'</div></div>';
 }
 
+var CARD_TABS=["team","song","dress"];
+var PANE_OUT_MS=150, PANE_DX=18;
+
 function cardTab(e,kid,which){
   e.stopPropagation();
   var card=document.getElementById("card-"+kid);
   var beforeTop=card?card.getBoundingClientRect().top:null;   // remember header position
-  ["team","song","dress"].forEach(function(t){
-    var tab=document.getElementById("ct-"+t+"-"+kid);
-    var pane=document.getElementById("pane-"+t+"-"+kid);
-    if(tab)tab.classList.toggle("on",t===which);
-    if(pane)pane.classList.toggle("on",t===which);
+
+  var cur=null;
+  CARD_TABS.forEach(function(t){
+    var p=document.getElementById("pane-"+t+"-"+kid);
+    if(p&&p.classList.contains("on"))cur=t;
   });
-  var ev=findEventByKid_(kid);
-  if(which==="song")loadCardSonglist(kid,ev);
-  if(which==="dress")loadCardDresscode(kid,ev);
-  growRoster(kid);
-  // keep the event's date/header exactly where it was — don't let the page slide
-  if(card&&beforeTop!==null){
-    requestAnimationFrame(function(){
-      var diff=card.getBoundingClientRect().top-beforeTop;
-      if(Math.abs(diff)>1)window.scrollBy(0,diff);
-    });
+  if(cur===which)return;   // re-tapping the active tab shouldn't replay the animation
+
+  // buttons flip immediately — the tap should feel answered before the pane moves
+  CARD_TABS.forEach(function(t){
+    var tab=document.getElementById("ct-"+t+"-"+kid);
+    if(tab)tab.classList.toggle("on",t===which);
+  });
+
+  var dir=(CARD_TABS.indexOf(which)>CARD_TABS.indexOf(cur))?1:-1;   // slide follows tab order
+  var oldPane=cur?document.getElementById("pane-"+cur+"-"+kid):null;
+
+  function mountNew(){
+    if(oldPane){oldPane.classList.remove("on","leaving");oldPane.style.removeProperty("--pane-dx");}
+    var np=document.getElementById("pane-"+which+"-"+kid);
+    if(np){
+      np.style.setProperty("--pane-dx",(dir*PANE_DX)+"px");   // enters from the side it came from
+      np.classList.add("on");
+    }
+    var ev=findEventByKid_(kid);
+    if(which==="song")loadCardSonglist(kid,ev);
+    if(which==="dress")loadCardDresscode(kid,ev);
+    growRoster(kid);
+    // keep the event's date/header exactly where it was — don't let the page slide
+    if(card&&beforeTop!==null){
+      requestAnimationFrame(function(){
+        var diff=card.getBoundingClientRect().top-beforeTop;
+        if(Math.abs(diff)>1)window.scrollBy(0,diff);
+      });
+    }
   }
+
+  if(oldPane){
+    oldPane.style.setProperty("--pane-dx",(-dir*PANE_DX)+"px");   // exits the opposite way
+    oldPane.classList.remove("on");
+    oldPane.classList.add("leaving");
+    setTimeout(mountNew,PANE_OUT_MS);   // close finishes before open starts
+  } else mountNew();
 }
 
 function findEventByKid_(kid){
@@ -2006,6 +2078,7 @@ function logoutToGate(){
   st.openKey=null;
   st.rosterCache={};
   st.songCache={};st.dressCache={};st.selfieCache={};st.inflight={};st.extrasLoaded=false;
+  st.schedCache={};st.schedInflight={};
   st.availOpenMonths=[];
   toggleAvailNav();
   setDeptHeader(null);
