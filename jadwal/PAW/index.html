@@ -754,6 +754,7 @@ function deptChipCss(dept){ var c=deptColor(dept); return "color:"+c.fg+";backgr
 var st={
   mainTab:"jadwal",
   vol:null,allEvents:[],schedTab:"jadwal",viewYear:0,viewMonth:0,monthDir:1,openKey:null,rosterCache:{},query:"",debounce:null,sugList:[],justPicked:false,
+  songCache:{},dressCache:{},selfieCache:{},inflight:{},
   ringYear:0,ringMonth:0,ringCache:{},
   availOpenMonths:[],availSelYear:0,availSelMonth:0,availBlocked:{},availDirty:false,
   rolesByDept:{},structureByDept:{},
@@ -925,12 +926,13 @@ function refreshAvailNav_(dept){
 function gotEvents(resp){
   var events = (resp && resp.events) ? resp.events : (resp || []);
   if (resp && resp.rosters) st.rosterCache = resp.rosters;
+  if (resp && resp.extras) seedExtras_(resp.extras);
   if (resp && resp.dept && st.vol) st.vol.dept = resp.dept;
   var dept = st.vol && st.vol.dept;
   if (dept && st.structureByDept[dept]) ROST = st.structureByDept[dept];
   if (dept && st.rolesByDept[dept]) PAW_ROLES = st.rolesByDept[dept];
   setDeptHeader(dept);
-  st.allEvents=mergeIbadah123_(events);var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
+  st.allEvents=mergeServiceGroups_(events);var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
   refreshAvailNav_(dept);
   renderJadwal();
 }
@@ -946,6 +948,7 @@ function renderJadwal(){
   requestAnimationFrame(function(){
   document.getElementById("content").classList.add("ready");
 });
+  schedulePrefetchExtras_();
 }
 
 function buildSched(){
@@ -992,44 +995,60 @@ function buildRiwayat(){
   var h="";ord.forEach(function(mk){var gi=g[mk];h+='<div class="hist-group"><div class="hist-month">'+gi.lbl+'</div><div class="ev-list">';gi.evs.forEach(function(ev,i){h+=cardHTML(ev,i);});h+='</div></div>';});return h;
 }
 
-/* ── MERGE Ibadah 1/2/3 → single "Ibadah 123" card ── */
-var IBADAH_TRIO=["Ibadah 1","Ibadah 2","Ibadah 3"];
+/* ── MERGE related services into one card ──
+   Ibadah 1/2/3 → "Ibadah 123"   (only when a person serves all three)
+   AOG Teens + AOG Youth → "AOG"  (only when a person serves both)
+   Voltage always stays on its own. A group only merges when the role is the
+   SAME across every member service; otherwise the cards stay separate. */
+var MERGE_GROUPS=[
+  {members:["Ibadah 1","Ibadah 2","Ibadah 3"], label:"Ibadah 123", time:"07:00, 09:30, 17:00"},
+  {members:["AOG Teens","AOG Youth"],           label:"AOG",        time:"17:00, 18:30"}
+];
 
-// representative service for song/dress/selfie on a merged card
+// representative service for song/dress/selfie on a merged card (first member)
 function svcOf_(ev){return ev&&ev.merged&&ev.merged.length?ev.merged[0]:(ev&&ev.service);}
 
-function mergeIbadah123_(events){
-  var trioByDate={};
-  events.forEach(function(e){
-    if(IBADAH_TRIO.indexOf(e.service)!==-1)
-      (trioByDate[e.date]=trioByDate[e.date]||{})[e.service]=e;
-  });
-  var mergeDates={};
-  Object.keys(trioByDate).forEach(function(d){
-    var m=trioByDate[d];
-    if(m["Ibadah 1"]&&m["Ibadah 2"]&&m["Ibadah 3"])mergeDates[d]=true;
-  });
+// For a date's service→event map, return the merge group `service` folds into —
+// but only if EVERY member is present that date AND all share the same role.
+// Otherwise null, so the card stays separate.
+function matchMergeGroup_(dateMap,service){
+  if(!dateMap)return null;
+  for(var i=0;i<MERGE_GROUPS.length;i++){
+    var g=MERGE_GROUPS[i];
+    if(g.members.indexOf(service)===-1)continue;
+    var allPresent=g.members.every(function(sv){return dateMap[sv];});
+    if(!allPresent)continue;
+    var role0=dateMap[g.members[0]].role;
+    var sameRole=g.members.every(function(sv){return dateMap[sv].role===role0;});
+    if(!sameRole)continue;
+    return g;
+  }
+  return null;
+}
+
+function mergeServiceGroups_(events){
+  var byDate={};
+  events.forEach(function(e){(byDate[e.date]=byDate[e.date]||{})[e.service]=e;});
   var out=[],emitted={};
   events.forEach(function(e){
-    var isTrio=mergeDates[e.date]&&IBADAH_TRIO.indexOf(e.service)!==-1;
-    if(!isTrio){out.push(e);return;}
-    var m=trioByDate[e.date];
-    var sameRole=m["Ibadah 1"].role===m["Ibadah 2"].role&&m["Ibadah 2"].role===m["Ibadah 3"].role;
-    if(!sameRole){out.push(e);return;}   // roles differ across services → keep 3 separate cards
-    if(emitted[e.date])return;           // merged card already added → drop the other two
-    emitted[e.date]=true;
-    var subs=IBADAH_TRIO.map(function(sv){return m[sv].subStatus||"aktif";});
+    var g=matchMergeGroup_(byDate[e.date],e.service);
+    if(!g){out.push(e);return;}            // not part of a full same-role group → keep as-is
+    var mergedKey=e.date+"|"+g.label;
+    if(emitted[mergedKey])return;          // merged card already added → drop the siblings
+    emitted[mergedKey]=true;
+    var m=byDate[e.date],mem=g.members,first=m[mem[0]];
+    var subs=mem.map(function(sv){return m[sv].subStatus||"aktif";});
     var subStatus=subs.every(function(x){return x===subs[0];})?subs[0]:"aktif";
     out.push({
       date:e.date,
-      service:"Ibadah 123",
-      time:"07:00, 09:30, 17:00",
-      role:m["Ibadah 1"].role,
+      service:g.label,
+      time:g.time,
+      role:first.role,
       name:e.name,
-      isPast:m["Ibadah 1"].isPast&&m["Ibadah 2"].isPast&&m["Ibadah 3"].isPast,
-      isSpecial:!!(m["Ibadah 1"].isSpecial||m["Ibadah 2"].isSpecial||m["Ibadah 3"].isSpecial),
+      isPast:mem.every(function(sv){return m[sv].isPast;}),
+      isSpecial:mem.some(function(sv){return !!m[sv].isSpecial;}),
       subStatus:subStatus,
-      merged:IBADAH_TRIO.slice()
+      merged:mem.slice()
     });
   });
   return out;
@@ -1108,6 +1127,7 @@ function toggleCard(key,myName){
   var rosterEl=document.getElementById("r-"+kid);
 
   if(opening){
+    prefetchCardExtras_(findEventByKid_(kid),kid);   // warm Lagu/Dresscode alongside the roster
     if(rosterEl)rosterEl.style.maxHeight=rosterEl.scrollHeight+"px";
     if(st.rosterCache[key]){
       fillRoster("ri-"+kid,st.rosterCache[key],myName);
@@ -1348,44 +1368,147 @@ function findEventByKid_(kid){
   return null;
 }
 
-function loadCardSonglist(kid,ev){
-  var pane=document.getElementById("pane-song-"+kid);
-  if(!pane||!ev)return;
-  if(pane.getAttribute("data-loaded")==="1")return;
-  pane.setAttribute("data-loaded","1");
+/* ── CARD EXTRAS — cached + de-duped so tabs render instantly ──
+   Every songlist/dresscode/selfie response is cached for the session, and a
+   fetch already in flight (e.g. from a prefetch) is reused instead of re-sent. */
+function cachedFetch_(cache,key,runner,onOk,onErr){
+  if(cache[key]!==undefined){onOk(cache[key]);return;}      // cache hit → instant
+  var w=st.inflight[key];
+  if(w){w.ok.push(onOk);w.err.push(onErr);return;}           // already loading → piggyback
+  w=st.inflight[key]={ok:[onOk],err:[onErr]};
+  runner(function(data){
+    cache[key]=data;delete st.inflight[key];
+    w.ok.forEach(function(f){try{f(data);}catch(err){console.error(err);}});
+  },function(e){
+    delete st.inflight[key];
+    w.err.forEach(function(f){try{f(e);}catch(err){console.error(err);}});
+  });
+}
+
+function fetchSonglist_(ev,onOk,onErr){
+  var svc=svcOf_(ev);
+  cachedFetch_(st.songCache,"song|"+ev.date+"|"+svc,function(ok,err){
+    google.script.run.withSuccessHandler(ok).withFailureHandler(err).getSonglist(ev.date,svc);
+  },onOk,onErr||function(){});
+}
+
+function fetchDresscode_(ev,onOk,onErr){
+  var svc=svcOf_(ev);
+  cachedFetch_(st.dressCache,"dress|"+ev.date+"|"+svc,function(ok,err){
+    google.script.run.withSuccessHandler(ok).withFailureHandler(err).getDresscode(ev.date,svc);
+  },onOk,onErr||function(){});
+}
+
+// getVolunteerSchedule bundles songlist/dresscode/selfie for upcoming services
+// (PAW only). Seeding them here means the Lagu/Dresscode tabs open from cache
+// with no request at all — same trick as the roster bundle.
+function seedExtras_(extras){
+  if(!st.vol||!extras)return;
+  Object.keys(extras).forEach(function(k){
+    var x=extras[k]||{};
+    if(x.song)st.songCache["song|"+k]=x.song;
+    if(x.dress)st.dressCache["dress|"+k]=x.dress;
+    if(x.selfie)st.selfieCache["selfie|"+st.vol.name+"|"+k]=x.selfie;
+  });
+}
+
+function selfieKey_(ev){return"selfie|"+st.vol.name+"|"+ev.date+"|"+svcOf_(ev);}
+
+function fetchSelfie_(ev,onOk,onErr){
+  if(!st.vol){onOk(null);return;}
+  var svc=svcOf_(ev);
+  cachedFetch_(st.selfieCache,selfieKey_(ev),function(ok,err){
+    google.script.run.withSuccessHandler(ok).withFailureHandler(err).getMySelfie(st.vol.name,ev.date,svc);
+  },onOk,onErr||function(){});
+}
+
+// A bundled status is a snapshot from page load — an approval could have landed
+// since. Show the cached one instantly, then quietly re-check and repaint only
+// if it actually changed.
+function revalidateSelfie_(kid,ev){
+  if(!st.vol)return;
+  var key=selfieKey_(ev),svc=svcOf_(ev);
   google.script.run.withSuccessHandler(function(res){
-    var songs=(res&&res.songs)||[];
-    if(!songs.length){pane.innerHTML='<div class="song-empty">Belum ada lagu untuk ibadah ini.</div>';growRoster(kid);return;}
-    var h='<div class="song-list">';
-    songs.forEach(function(s,i){
-      var yt=s.link?('<a class="song-yt" href="'+encodeURI(s.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></a>'):'<span class="song-yt off"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
-      h+='<div class="song-row"><div class="song-info"><div class="song-no">Lagu '+(s.no||i+1)+'</div><div class="song-title">'+esc(s.judul)+'</div>'+(s.pencipta?'<div class="song-pencipta">'+esc(s.pencipta)+'</div>':'')+'</div>'+yt+'</div>';
-    });
-    h+='</div>';
-    pane.innerHTML=h;growRoster(kid);
-  }).withFailureHandler(function(e){pane.innerHTML='<div class="song-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getSonglist(ev.date,svcOf_(ev));
+    var prev=st.selfieCache[key]||{};
+    st.selfieCache[key]=res;
+    if(prev.status!==(res&&res.status)||prev.url!==(res&&res.url))applySelfie_(kid,res);
+  }).withFailureHandler(function(){}).getMySelfie(st.vol.name,ev.date,svc);
+}
+
+// Warm all three the moment a card opens, in parallel with the roster.
+function prefetchCardExtras_(ev,kid){
+  if(!ev||!(st.vol&&st.vol.dept==="PAW"))return;
+  fetchSonglist_(ev,function(res){renderSonglistPane_(kid,res);},function(){});
+  fetchDresscode_(ev,function(res){renderDressPane_(kid,ev,res);},function(){});
+  fetchSelfie_(ev,function(){},function(){});   // cache only; the dress pane reads it
+}
+
+// Quietly warm the next few upcoming cards once the list is idle.
+var PREFETCH_MAX=4;
+function schedulePrefetchExtras_(){
+  if(!(st.vol&&st.vol.dept==="PAW")||st.schedTab!=="jadwal")return;
+  st.allEvents.filter(function(e){
+    return !e.isPast&&mOf(e.date).key===mKey(st.viewYear,st.viewMonth);
+  }).slice(0,PREFETCH_MAX).forEach(function(ev,i){
+    var kid=safeId(ev.date+"|"+ev.service);
+    setTimeout(function(){
+      var run=function(){prefetchCardExtras_(ev,kid);};
+      if(window.requestIdleCallback)requestIdleCallback(run,{timeout:1500});else run();
+    },250*i);
+  });
+}
+
+function renderSonglistPane_(kid,res){
+  var pane=document.getElementById("pane-song-"+kid);
+  if(!pane)return;
+  var songs=(res&&res.songs)||[];
+  if(!songs.length){pane.innerHTML='<div class="song-empty">Belum ada lagu untuk ibadah ini.</div>';growRoster(kid);return;}
+  var h='<div class="song-list">';
+  songs.forEach(function(s,i){
+    var yt=s.link?('<a class="song-yt" href="'+encodeURI(s.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></a>'):'<span class="song-yt off"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
+    h+='<div class="song-row"><div class="song-info"><div class="song-no">Lagu '+(s.no||i+1)+'</div><div class="song-title">'+esc(s.judul)+'</div>'+(s.pencipta?'<div class="song-pencipta">'+esc(s.pencipta)+'</div>':'')+'</div>'+yt+'</div>';
+  });
+  h+='</div>';
+  pane.innerHTML=h;growRoster(kid);
+}
+
+function loadCardSonglist(kid,ev){
+  if(!ev)return;
+  fetchSonglist_(ev,function(res){renderSonglistPane_(kid,res);},function(e){
+    var pane=document.getElementById("pane-song-"+kid);
+    if(pane){pane.innerHTML='<div class="song-empty">Gagal memuat: '+esc(e.message)+'</div>';growRoster(kid);}
+  });
+}
+
+function renderDressPane_(kid,ev,res){
+  var pane=document.getElementById("pane-dress-"+kid);
+  if(!pane)return;
+  var preview=res&&res.previewUrl||"";
+  var pdf=res&&res.pdfUrl||"";
+  var h='<div class="dress-pane-inner">';
+  if(preview){
+    h+='<div class="dress-pdf-wrap"><iframe src="'+encodeURI(preview)+'" loading="lazy"></iframe></div>';
+    h+='<a class="dress-open-link" href="'+encodeURI(pdf||preview)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Buka PDF di tab baru</a>';
+  } else {
+    h+='<div class="dress-empty">Belum ada dresscode untuk ibadah ini.</div>';
+  }
+  h+=selfieBoxHTML(kid,ev);
+  h+='</div>';
+  pane.innerHTML=h;
+  growRoster(kid);
+  var fr=pane.querySelector("iframe");
+  if(fr)fr.addEventListener("load",function(){growRoster(kid);});   // re-measure once the PDF frame is in
+  var hadSelfie=st.selfieCache[selfieKey_(ev)]!==undefined;
+  fetchSelfie_(ev,function(sres){applySelfie_(kid,sres);},function(){renderSelfieStatus(kid,"none");});
+  if(hadSelfie)revalidateSelfie_(kid,ev);   // cached hit → confirm it's still current
 }
 
 function loadCardDresscode(kid,ev){
-  var pane=document.getElementById("pane-dress-"+kid);
-  if(!pane||!ev)return;
-  if(pane.getAttribute("data-loaded")==="1")return;
-  pane.setAttribute("data-loaded","1");
-  google.script.run.withSuccessHandler(function(res){
-    var preview=res&&res.previewUrl||"";
-    var pdf=res&&res.pdfUrl||"";
-    var h='<div class="dress-pane-inner">';
-    if(preview){
-      h+='<div class="dress-pdf-wrap"><iframe src="'+encodeURI(preview)+'" loading="lazy"></iframe></div>';
-      h+='<a class="dress-open-link" href="'+encodeURI(pdf||preview)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Buka PDF di tab baru</a>';
-    } else {
-      h+='<div class="dress-empty">Belum ada dresscode untuk ibadah ini.</div>';
-    }
-    h+=selfieBoxHTML(kid,ev);
-    h+='</div>';
-    pane.innerHTML=h;growRoster(kid);
-    loadMySelfie(kid,ev);
-  }).withFailureHandler(function(e){pane.innerHTML='<div class="dress-empty">Gagal memuat: '+esc(e.message)+'</div>';pane.setAttribute("data-loaded","0");growRoster(kid);}).getDresscode(ev.date,svcOf_(ev));
+  if(!ev)return;
+  fetchDresscode_(ev,function(res){renderDressPane_(kid,ev,res);},function(e){
+    var pane=document.getElementById("pane-dress-"+kid);
+    if(pane){pane.innerHTML='<div class="dress-empty">Gagal memuat: '+esc(e.message)+'</div>';growRoster(kid);}
+  });
 }
 
 function selfieBoxHTML(kid,ev){
@@ -1411,13 +1534,22 @@ function renderSelfieStatus(kid,status){
   el.innerHTML='<span class="selfie-status '+s+'">'+(SELFIE_STATUS_LABEL[s]||SELFIE_STATUS_LABEL.none)+'</span>';
 }
 
+// The card's max-height is measured from scrollHeight, so it MUST be re-measured
+// after the image has real dimensions — otherwise the photo renders cropped.
+function setSelfiePreview_(kid,url){
+  var pv=document.getElementById("selfie-preview-"+kid);
+  if(!pv)return;
+  if(!url){pv.innerHTML="";growRoster(kid);return;}
+  pv.innerHTML='<img class="selfie-preview" src="'+encodeURI(url)+'" alt="selfie" onload="growRoster(\''+kid+'\')" onerror="growRoster(\''+kid+'\')">';
+}
+
+function applySelfie_(kid,res){
+  renderSelfieStatus(kid,(res&&res.status)||"none");
+  setSelfiePreview_(kid,res&&res.url);
+}
+
 function loadMySelfie(kid,ev){
-  google.script.run.withSuccessHandler(function(res){
-    var status=(res&&res.status)||"none";
-    renderSelfieStatus(kid,status);
-    var pv=document.getElementById("selfie-preview-"+kid);
-    if(pv){pv.innerHTML=(res&&res.url)?'<img class="selfie-preview" src="'+encodeURI(res.url)+'" alt="selfie">':'';}
-  }).withFailureHandler(function(){renderSelfieStatus(kid,"none");}).getMySelfie(st.vol.name,ev.date,svcOf_(ev));
+  fetchSelfie_(ev,function(res){applySelfie_(kid,res);},function(){renderSelfieStatus(kid,"none");});
 }
 
 function triggerSelfie(e,kid){e.stopPropagation();var inp=document.getElementById("selfie-input-"+kid);if(inp)inp.click();}
@@ -1435,10 +1567,9 @@ function onSelfiePicked(e,kid){
     google.script.run.withSuccessHandler(function(res){
       if(btn){btn.disabled=false;btn.textContent="Upload Ulang";}
       if(res&&res.ok){
-        renderSelfieStatus(kid,"pending");
-        var pv=document.getElementById("selfie-preview-"+kid);
-        if(pv&&res.url)pv.innerHTML='<img class="selfie-preview" src="'+encodeURI(res.url)+'" alt="selfie">';
-        growRoster(kid);
+        var fresh={status:"pending",url:res.url||""};
+        st.selfieCache[selfieKey_(ev)]=fresh;  // keep cache honest
+        applySelfie_(kid,fresh);   // preview waits for img load before re-measuring
       } else { alert((res&&res.msg)||"Gagal upload."); }
     }).withFailureHandler(function(err){
       if(btn){btn.disabled=false;btn.textContent="Upload Selfie";}
@@ -1725,6 +1856,7 @@ function logoutToGate(){
   st.allEvents=[];
   st.openKey=null;
   st.rosterCache={};
+  st.songCache={};st.dressCache={};st.selfieCache={};st.inflight={};
   st.availOpenMonths=[];
   toggleAvailNav();
   setDeptHeader(null);
