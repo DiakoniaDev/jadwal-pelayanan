@@ -985,6 +985,10 @@ function navTo(tab){
   else if(tab==="ringkasan")renderRingkasan();
   else if(tab==="catatan")renderCatatan();
   else renderMasukan();
+  // One call here covers every branch — including the early returns (cached
+  // ringkasan, empty states, no-vol) that used to skip their own contentReady_
+  // and leave the page stuck at opacity:0.
+  contentReady_();
 }
 
 /* ── ONBOARDING GATE ── */
@@ -2264,6 +2268,7 @@ function contentReady_(){
   var c=document.getElementById("content");
   if(!c)return;
   requestAnimationFrame(function(){c.classList.add("ready");});
+  setTimeout(function(){c.classList.add("ready");},90);   // rAF is throttled/dropped when backgrounded
 }
 
 function showLoading(){
@@ -2273,8 +2278,11 @@ function showLoading(){
   contentReady_();
 }
 
-function showErr(msg){document.getElementById("content").innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-msg">'+esc(msg)+'</div></div>';}
-
+function showErr(msg){
+  document.getElementById("content").innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-msg">'+esc(msg)+'</div></div>';
+  contentReady_();
+}
+        
 function av(url,name,size,role){var fz=Math.round(size*.27),init=initials(name),col=C(role||"soundman").fg,fb='<span style="font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'">'+init+'</span>';if(!url)return fb;return'<img src="'+url+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;display:block" alt="'+esc(name)+'" onerror="this.outerHTML=\'<span style=font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'>'+init+'</span>\'">';}
 function initials(n){if(!n)return"?";var p=n.trim().split(" ");return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
 function isoToday(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
