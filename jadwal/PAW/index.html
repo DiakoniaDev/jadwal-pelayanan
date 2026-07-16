@@ -543,8 +543,16 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ONBOARDING GATE ──────── */
-.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;opacity:1;transform-origin:center 38%;transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.55,0,.5,1)}
-/* Masuk → the gate rushes past the camera while the app scales up underneath. */
+.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;transform-origin:top center;will-change:transform}
+/* Masuk → the whole gate squashes down to load up, then springs off the top,
+   stretching thin as it goes. The app is already painted underneath (loader and
+   all), so lifting the gate IS the reveal. No opacity in this sequence. */
+.gate.closing{pointer-events:none;animation:gateLift .55s cubic-bezier(.66,0,.28,1) both}
+@keyframes gateLift{
+  0%  { transform:translateY(0) scaleY(1); }
+  18% { transform:translateY(1.5%) scaleY(.955); }   /* anticipation squash */
+  100%{ transform:translateY(-104%) scaleY(1.06); }  /* stretch on exit */
+}
 .gate.closing{opacity:0;transform:scale(1.5);pointer-events:none}
 .gate.closing .gate-inner{animation:gateBlast .5s cubic-bezier(.6,0,.75,0) both}
 @keyframes gateBlast{
@@ -590,28 +598,29 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
   100%{ opacity:0; transform:scale(2.4); }
 }
 
-/* ── INLINE FIELD LABELS — label lives inside the control, on its left ── */
-.field-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8890aa;white-space:nowrap}
-.field-sep{background:rgba(255,255,255,.10)}
-.gate-name-wrap .field-lbl{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:76px;z-index:2;pointer-events:none}
-.gate-name-wrap .field-sep{position:absolute;left:91px;top:12px;bottom:12px;width:1px;z-index:2;pointer-events:none}
-.gate-name-wrap .form-inp{padding-left:101px;min-height:52px}
+/* ── FIELD ROWS — the label is its own shape, the control is its own shape ── */
+:root{--tag-w:108px}
+.field-row{display:flex;align-items:center;gap:8px}
+.field-tag{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:var(--tag-w);min-height:46px;padding:0 10px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8890aa;white-space:nowrap}
+.name-srch{flex:1;min-width:0;margin-bottom:0}
+.gate-name-wrap .form-inp{width:100%;padding-left:15px;min-height:46px}
 
 /* ── PANE LOADER (Lagu / Dresscode tabs) ── */
 .pane-load{padding:24px 14px;text-align:center}
 .pane-load .big-spin{margin:0 auto 10px}
 
 /* ── GATE DEPT PICKER — same pill as the main header ── */
+/* The trigger doesn't CONTAIN a pill — it IS the pill. renderDeptTrigger_ paints
+   the picked dept's own bg/fg straight onto this element. */
 .dept-pick{position:relative}
-.dept-trig{width:100%;min-height:52px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:8px 14px;display:flex;align-items:center;cursor:pointer;transition:border-color .2s,box-shadow .2s}
-.dept-trig.on{border-color:#e8b84b;box-shadow:0 0 0 3px rgba(232,184,75,.1)}
-.dept-trig .field-lbl{width:76px;flex-shrink:0}
-.dept-trig .field-sep{width:1px;align-self:stretch;margin-right:10px;flex-shrink:0}
-.dept-trig-body{display:flex;align-items:center;min-width:0}
-.dept-trig-ph{font-size:15px;color:#4a5070}
-.dept-trig-chev{margin-left:auto;padding-left:8px;color:#8890aa;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
+.dept-trig{min-height:46px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:7px 11px 7px 10px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
+.dept-trig.on{box-shadow:0 0 0 3px rgba(232,184,75,.1)}
+.dept-trig:not(.picked).on{border-color:#e8b84b}
+.dept-trig-body{display:flex;align-items:center;gap:7px;min-width:0}
+.dept-trig-ph{font-size:14px;color:#4a5070;padding:0 2px}
+.dept-trig-chev{margin-left:auto;padding-left:2px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
 .dept-trig.on .dept-trig-chev{transform:rotate(180deg)}
-.dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:120;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:6px;max-height:264px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;box-shadow:0 14px 44px rgba(0,0,0,.75);animation:popIn .16s cubic-bezier(.34,1.5,.64,1) both}
+.dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:auto;min-width:215px;z-index:120;
 .dept-opt{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px;cursor:pointer;transition:background .1s}
 .dept-opt:active{background:#1a1e28}
 /* --d-fg/--d-bg are set inline per option from DEPT_META, so the selected row
@@ -636,23 +645,25 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
   <div class="gate-sub" id="gate-sub">GMS Salatiga</div>
 
     <div class="form-g">
-      <div class="dept-pick">
-        <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
-          <span class="field-lbl">Departemen</span>
-          <span class="field-sep"></span>
-          <span class="dept-trig-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih…</span></span>
-          <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      <div class="field-row">
+        <span class="field-tag">Departemen</span>
+        <div class="dept-pick">
+          <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
+            <span class="dept-trig-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih…</span></span>
+            <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </div>
+          <div class="dept-menu" id="gate-dept-menu"></div>
         </div>
-        <div class="dept-menu" id="gate-dept-menu"></div>
       </div>
     </div>
 
     <div class="form-g">
-      <div class="srch gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
-        <span class="field-lbl">Nama</span>
-        <span class="field-sep"></span>
-        <input class="form-inp" id="gate-name-inp" type="text" placeholder="Pilih dept dulu…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
-        <div class="sug" id="gate-sug"></div>
+      <div class="field-row gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
+        <span class="field-tag">Nama</span>
+        <div class="srch name-srch">
+          <input class="form-inp" id="gate-name-inp" type="text" placeholder="Pilih dept dulu…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
+          <div class="sug" id="gate-sug"></div>
+        </div>
       </div>
     </div>
 
@@ -886,7 +897,7 @@ var st={
   vol:null,allEvents:[],schedTab:"jadwal",viewYear:0,viewMonth:0,monthDir:1,openKey:null,rosterCache:{},query:"",debounce:null,sugList:[],justPicked:false,
   songCache:{},dressCache:{},selfieCache:{},inflight:{},extrasLoaded:false,
   schedCache:{},schedInflight:{},
-  ringYear:0,ringMonth:0,ringCache:{},
+  ringYear:0,ringMonth:0,ringCache:{},notesCache:{},
   availOpenMonths:[],availSelYear:0,availSelMonth:0,availBlocked:{},availDirty:false,
   rolesByDept:{},structureByDept:{},cardTabsByDept:{},
   departments:[],deptFilter:"",
@@ -1032,9 +1043,27 @@ function pickGateDept(d){
   if(inp)inp.focus();
 }
 
+// Bare icon+name, no wrapper background — the caller supplies the shape.
+function deptPillInnerHTML(dept){
+  var m=deptMeta(dept);
+  return '<span class="dept-pill-icon">'+m.icon+'</span>'+
+         '<span class="dept-pill-name">'+esc(dept)+'</span>';
+}
+
 function renderDeptTrigger_(d){
   var body=document.getElementById("gate-dept-body");
-  if(body)body.innerHTML=d?deptPillHTML(d):'<span class="dept-trig-ph">Pilih…</span>';
+  var trig=document.getElementById("gate-dept-trig");
+  if(body)body.innerHTML=d?deptPillInnerHTML(d):'<span class="dept-trig-ph">Pilih…</span>';
+  if(trig){
+    if(d){
+      var m=deptMeta(d);
+      trig.style.background=m.bg;trig.style.color=m.fg;trig.style.borderColor=m.fg;
+      trig.classList.add("picked");
+    } else {
+      trig.style.background="";trig.style.color="";trig.style.borderColor="";
+      trig.classList.remove("picked");
+    }
+  }
   (st.departments||[]).forEach(function(x){
     var o=document.getElementById("dopt-"+safeId(x));
     if(o)o.classList.toggle("sel",x===d);
@@ -1105,23 +1134,50 @@ function pickGateVol(idx){
   prefetchSchedule_(v.name);   // head start while they reach for Masuk
 }
 
+var REVEAL_MS=550;
+var revealBusy_=false, revealQueue_=[];
+
+// Anything that should be SEEN happening waits for the gate to clear the screen.
+function afterReveal_(fn){
+  if(!revealBusy_){fn();return;}
+  revealQueue_.push(fn);
+}
+function revealDone_(){
+  revealBusy_=false;
+  var q=revealQueue_;revealQueue_=[];
+  q.forEach(function(f){try{f();}catch(e){console.error(e);}});
+}
+
+// Snap #content visible with the transition suppressed. The gate is still on top
+// at this point, so a fade-in here would only be half-finished when it lifts.
+function contentInstant_(){
+  var c=document.getElementById("content");
+  if(!c)return;
+  c.style.transition="none";
+  c.classList.add("ready");
+  void c.offsetWidth;
+  c.style.transition="";
+}
+
 function enterApp(){
   var v=st.gateSelectedVol;
   if(!v)return;
   var g=document.getElementById("gate");
-  var bloom=document.getElementById("enter-bloom");
+  hideDeptMenu();hideGateSug();
 
-  if(bloom){bloom.classList.remove("go");void bloom.offsetWidth;bloom.classList.add("go");}
+  document.body.classList.add("app-in");
+  loginAsVol(v);      // paints the loader (or the cached schedule) behind the gate
+  contentInstant_();  // …and makes sure it's actually on screen before the lift
+
+  revealBusy_=true;
   if(g){
     g.classList.add("closing");
-    setTimeout(function(){g.style.display="none";g.classList.remove("closing");},600);
-  }
-  // app-in arms every entrance animation: header, dept pill, content, home.
-  document.body.classList.remove("app-in");
-  void document.body.offsetWidth;
-  document.body.classList.add("app-in");
-
-  loginAsVol(v);
+    setTimeout(function(){
+      g.style.display="none";
+      g.classList.remove("closing");
+      revealDone_();
+    },REVEAL_MS);
+  } else revealDone_();
 }
 
 /* dept-filter and in-page search bar were removed — identity now only comes
@@ -1193,6 +1249,14 @@ function gotEvents(resp){
   st.allEvents=mergeServiceGroups_(events);var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
   refreshAvailNav_(dept);
   renderJadwal();
+  prefetchNotes_(dept);   // warm it now — Catatan then opens with no round-trip
+}
+
+function prefetchNotes_(dept){
+  if(!dept||st.notesCache[dept])return;
+  google.script.run.withSuccessHandler(function(notes){
+    st.notesCache[dept]=notes||[];
+  }).withFailureHandler(function(){}).getNotes(dept);
 }
         
 /* ── JADWAL TAB ── */
@@ -2168,15 +2232,22 @@ function saveRingkasanAsImage(){
 }
 
 /* ── CATATAN ── */
+function paintNotes_(notes){
+  if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';contentReady_();return;}
+  var h='<div class="notes-list">';notes.forEach(function(n){h+='<div class="note-card">'+(n.tanggal?'<div class="note-date">'+esc(n.tanggal)+(n.oleh?' · '+esc(n.oleh):'')+'</div>':'')+(n.judul?'<div class="note-title">'+esc(n.judul)+'</div>':'')+(n.isi?'<div class="note-body">'+esc(n.isi).replace(/\n/g,'<br>')+'</div>':'')+'</div>';});h+='</div>';
+  document.getElementById("content").innerHTML=h;
+  contentReady_();
+}
+
 function renderCatatan(){
   if(!st.vol){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk melihat catatan.</div></div>';return;}
+  var dept=st.vol.dept;
+  if(st.notesCache[dept]){paintNotes_(st.notesCache[dept]);return;}   // prefetched → no loader at all
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat catatan…</div></div>';
   google.script.run.withSuccessHandler(function(notes){
-    if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';return;}
-    var h='<div class="notes-list">';notes.forEach(function(n){h+='<div class="note-card">'+(n.tanggal?'<div class="note-date">'+esc(n.tanggal)+(n.oleh?' · '+esc(n.oleh):'')+'</div>':'')+(n.judul?'<div class="note-title">'+esc(n.judul)+'</div>':'')+(n.isi?'<div class="note-body">'+esc(n.isi).replace(/\n/g,'<br>')+'</div>':'')+'</div>';});h+='</div>';
-    document.getElementById("content").innerHTML=h;
-    contentReady_();
-  }).withFailureHandler(function(e){showErr(e.message);}).getNotes(st.vol.dept);
+    st.notesCache[dept]=notes||[];
+    paintNotes_(st.notesCache[dept]);
+  }).withFailureHandler(function(e){showErr(e.message);}).getNotes(dept);
 }
 
 /* ── MASUKAN ── */
@@ -2214,6 +2285,7 @@ function logoutToGate(){
   st.rosterCache={};
   st.songCache={};st.dressCache={};st.selfieCache={};st.inflight={};st.extrasLoaded=false;
   st.schedCache={};st.schedInflight={};
+  st.notesCache={};st.ringCache={};
   st.availOpenMonths=[];
   toggleAvailNav();
   setDeptHeader(null);
