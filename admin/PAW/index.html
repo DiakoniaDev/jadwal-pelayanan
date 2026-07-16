@@ -117,19 +117,13 @@ input, textarea {
 }
 
 /* ── HEADER ── */
-.hdr{
-  position:sticky;top:0;z-index:40;
-  background:#12151c;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  padding:28px var(--page-pad) 20px;
-  margin-bottom:22px;
-  width:100%;
-  transform-origin:top center;
-  animation:hdrSlideIn .5s cubic-bezier(.22,1,.36,1) both;
-}
+.hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;margin-bottom:16px;width:100%;transform-origin:top center}
+/* Entrance only fires once the person is actually in the app (body.app-in),
+   so it isn't wasted playing behind the gate on first paint. */
+body.app-in .hdr{animation:hdrSlideIn .8s cubic-bezier(.22,1,.36,1) both}
 @keyframes hdrSlideIn{
-  0%  { opacity:0; transform:translateY(-46px) scaleY(.9); }
-  60% { opacity:1; transform:translateY(4px) scaleY(1.02); }
+  0%  { opacity:0; transform:translateY(-46px) scaleY(.92); }
+  70% { opacity:1; transform:translateY(3px) scaleY(1.015); }
   100%{ transform:translateY(0) scaleY(1); }
 }
 .hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:0}
@@ -146,11 +140,13 @@ input, textarea {
 
 /* Slides in once, then hands transform over to pillThrob. Scoped to #dept-pill,
    NOT .dept-pill — the lock dropdown reuses the class and must stay still. */
-#dept-pill{position:relative;animation:deptSlideIn .55s cubic-bezier(.22,1,.36,1) both, pillThrob 2.6s ease-in-out .55s infinite}
-#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) .55s infinite}
+#dept-pill{position:relative;opacity:0}
+#dept-pill.in{animation:deptSlideIn .85s cubic-bezier(.22,1,.36,1) .12s both, pillThrob 3.4s ease-in-out 1s infinite}
+#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;opacity:0}
+#dept-pill.in::after{animation:pillHalo 3.4s cubic-bezier(.22,1,.36,1) 1s infinite}
 @keyframes deptSlideIn{
-  0%  {opacity:0;transform:translateX(48px) scale(.9)}
-  62% {opacity:1;transform:translateX(-4px) scale(1.03)}
+  0%  {opacity:0;transform:translateX(78px) scale(.86)}
+  60% {opacity:1;transform:translateX(-5px) scale(1.04)}
   100%{opacity:1;transform:translateX(0) scale(1)}
 }
 @keyframes pillThrob{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
