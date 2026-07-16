@@ -123,9 +123,20 @@ input, textarea {
 }
 
 /* ── HEADER — 32px sides ──── */
-/* No entrance here — the gate lifting off IS the reveal. Anything that played
-   would finish behind the gate and never be seen. */
 .hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;margin-bottom:16px;width:100%}
+/* While the schedule is still in flight the header is an empty shell — hide it
+   so the loader gets the whole screen, and zero out the space .loading reserves
+   for it (132px ≈ the page/content bottom padding, keeps it off the scrollbar). */
+body.app-loading .hdr{display:none}
+body.app-loading{--hdr-space:132px}
+/* Dropped in by appLoaded_() once the data is home AND the gate has lifted, so
+   the slide is actually witnessed. */
+.hdr.drop{transform-origin:top center;animation:hdrDrop .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes hdrDrop{
+  0%  {transform:translateY(-100%) scaleY(.9)}
+  72% {transform:translateY(2px) scaleY(1.02)}
+  100%{transform:translateY(0) scaleY(1)}
+}
 .hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:0;}
 .menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-left:-8px}
 .menu-btn:active{background:rgba(255,255,255,.08)}
@@ -1251,6 +1262,7 @@ function renderJadwal(){
     (st.schedTab==="jadwal"?buildSched():buildRiwayat());
   document.getElementById("content").innerHTML=h;
   contentReady_();
+  appLoaded_();
   loadCardExtras_();
 }
 
@@ -2273,6 +2285,9 @@ function logoutToGate(){
   toggleAvailNav();
   setDeptHeader(null);
   document.body.classList.remove("app-in");
+  document.body.classList.remove("app-loading");
+  var hdrEl=document.querySelector(".hdr");
+  if(hdrEl)hdrEl.classList.remove("drop");
   document.getElementById("content").innerHTML=homeHTML();
   document.getElementById("content").classList.add("ready");
   showGateAgain();
@@ -2331,6 +2346,7 @@ function contentReady_(){
 }
 
 function showLoading(){
+  document.body.classList.add("app-loading");   // header off — the loader owns the screen
   contentOut_();
   var el=document.getElementById("content");
   el.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
@@ -2340,6 +2356,22 @@ function showLoading(){
 function showErr(msg){
   document.getElementById("content").innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-msg">'+esc(msg)+'</div></div>';
   contentReady_();
+  appLoaded_();   // an error is a result too — don't strand the header off-screen
+}
+
+// Ends the headerless loading state. Queued behind the gate lift: with a warm
+// cache this fires instantly, and dropping the header behind a closed gate would
+// waste the animation entirely.
+function appLoaded_(){
+  if(!document.body.classList.contains("app-loading"))return;
+  afterReveal_(function(){
+    document.body.classList.remove("app-loading");
+    var h=document.querySelector(".hdr");
+    if(!h)return;
+    h.classList.remove("drop");
+    void h.offsetWidth;
+    h.classList.add("drop");
+  });
 }
         
 function av(url,name,size,role){var fz=Math.round(size*.27),init=initials(name),col=C(role||"soundman").fg,fb='<span style="font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'">'+init+'</span>';if(!url)return fb;return'<img src="'+url+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;display:block" alt="'+esc(name)+'" onerror="this.outerHTML=\'<span style=font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'>'+init+'</span>\'">';}
