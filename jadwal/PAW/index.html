@@ -27,7 +27,7 @@
 :root {
   --page-pad: 25px;
   --gate-top: 9svh;    /* how far down the gate content starts — smaller = higher up the page */
-  --hdr-space: 160px;  /* header + bottom padding the full-page loader discounts when centering */
+  --hdr-space: 190px;  /* header + bottom padding the full-page loader discounts when centering */
 }
 
 html {
@@ -542,7 +542,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ONBOARDING GATE ──────── */
-.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;transform-origin:top center;will-change:transform}
+.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 16px;overflow-y:auto;
 /* Masuk → the whole gate squashes down to load up, then springs off the top,
    stretching thin as it goes. The app is already painted underneath (loader and
    all), so lifting the gate IS the reveal. No opacity in this sequence. */
@@ -579,7 +579,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 #native-splash .big-spin{margin:0}
 
 /* ── FIELD ROWS — the label is its own shape, the control is its own shape ── */
-:root{--tag-w:108px}
+:root{--tag-w:74px}
 .field-row{display:flex;align-items:center;gap:8px}
 .field-tag{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:var(--tag-w);min-height:46px;padding:0 10px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8890aa;white-space:nowrap}
 .name-srch{flex:1;min-width:0;margin-bottom:0}
@@ -592,15 +592,15 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 /* ── GATE DEPT PICKER — same pill as the main header ── */
 /* The trigger doesn't CONTAIN a pill — it IS the pill. renderDeptTrigger_ paints
    the picked dept's own bg/fg straight onto this element. */
-.dept-pick{position:relative}
-.dept-trig{min-height:46px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:7px 11px 7px 10px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
+.dept-pick{position:relative;flex:1;min-width:0}
+.dept-trig{width:100%;min-height:46px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:7px 11px 7px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
 .dept-trig.on{box-shadow:0 0 0 3px rgba(232,184,75,.1)}
 .dept-trig:not(.picked).on{border-color:#e8b84b}
 .dept-trig-body{display:flex;align-items:center;gap:7px;min-width:0}
 .dept-trig-ph{font-size:14px;color:#4a5070;padding:0 2px}
 .dept-trig-chev{margin-left:auto;padding-left:2px;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
 .dept-trig.on .dept-trig-chev{transform:rotate(180deg)}
-.dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:auto;min-width:215px;z-index:120;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:6px;max-height:264px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;box-shadow:0 14px 44px rgba(0,0,0,.75);animation:popIn .16s cubic-bezier(.34,1.5,.64,1) both}
+.dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:120;
 .dept-opt{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px;cursor:pointer;transition:background .1s}
 .dept-opt:active{background:#1a1e28}
 /* --d-fg/--d-bg are set inline per option from DEPT_META, so the selected row
@@ -625,7 +625,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 
     <div class="form-g">
       <div class="field-row">
-        <span class="field-tag">Departemen</span>
+        <span class="field-tag">Dept</span>
         <div class="dept-pick">
           <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
             <span class="dept-trig-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih…</span></span>
