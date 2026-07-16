@@ -591,11 +591,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 #native-splash.off{opacity:0;transform:scale(1.14);pointer-events:none}
 #native-splash .big-spin{margin:0}
 
-/* ── FIELD ROWS — the label is its own shape, the control is its own shape ── */
-:root{--tag-w:74px}
-.field-row{display:flex;align-items:center;gap:8px}
-.field-tag{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:var(--tag-w);min-height:46px;padding:0 10px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8890aa;white-space:nowrap}
-.name-srch{flex:1;min-width:0;margin-bottom:0}
+/* ── GATE FIELDS — no labels; each control speaks for itself ── */
 .gate-name-wrap .form-inp{width:100%;padding-left:15px;min-height:46px}
 
 /* ── PANE LOADER (Lagu / Dresscode tabs) ── */
@@ -605,7 +601,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 /* ── GATE DEPT PICKER — same pill as the main header ── */
 /* The trigger doesn't CONTAIN a pill — it IS the pill. renderDeptTrigger_ paints
    the picked dept's own bg/fg straight onto this element. */
-.dept-pick{position:relative;flex:1;min-width:0}
+.dept-pick{position:relative}
 .dept-trig{width:100%;min-height:46px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:7px 11px 7px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s,background .2s}
 .dept-trig.on{box-shadow:0 0 0 3px rgba(232,184,75,.1)}
 .dept-trig:not(.picked).on{border-color:#e8b84b}
@@ -636,26 +632,20 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     <div class="gate-title" id="gate-title">Jadwal Pelayanan</div>
   <div class="gate-sub" id="gate-sub">GMS Salatiga</div>
 
-    <div class="form-g">
-      <div class="field-row">
-        <span class="field-tag">Dept</span>
-        <div class="dept-pick">
-          <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
-            <span class="dept-trig-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih…</span></span>
-            <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-          </div>
-          <div class="dept-menu" id="gate-dept-menu"></div>
+   <div class="form-g">
+      <div class="dept-pick">
+        <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
+          <span class="dept-trig-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih departemen</span></span>
+          <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
+        <div class="dept-menu" id="gate-dept-menu"></div>
       </div>
     </div>
 
     <div class="form-g">
-      <div class="field-row gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
-        <span class="field-tag">Nama</span>
-        <div class="srch name-srch">
-          <input class="form-inp" id="gate-name-inp" type="text" placeholder="Pilih dept dulu…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
-          <div class="sug" id="gate-sug"></div>
-        </div>
+      <div class="srch gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
+        <input class="form-inp" id="gate-name-inp" type="text" placeholder="Pilih departemen dulu" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
+        <div class="sug" id="gate-sug"></div>
       </div>
     </div>
 
@@ -1045,7 +1035,7 @@ function deptPillInnerHTML(dept){
 function renderDeptTrigger_(d){
   var body=document.getElementById("gate-dept-body");
   var trig=document.getElementById("gate-dept-trig");
-  if(body)body.innerHTML=d?deptPillInnerHTML(d):'<span class="dept-trig-ph">Pilih…</span>';
+  if(body)body.innerHTML=d?deptPillInnerHTML(d):'<span class="dept-trig-ph">Pilih departemen</span>';
   if(trig){
     if(d){
       var m=deptMeta(d);
@@ -1074,7 +1064,7 @@ function setGateDept_(d){
   hideGateSug();
   if(!d){
     wrap.style.opacity=".4";wrap.style.pointerEvents="none";
-    inp.disabled=true;inp.value="";inp.placeholder="Pilih dept dulu…";
+    inp.disabled=true;inp.value="";inp.placeholder="Pilih departemen dulu";
     return;
   }
   wrap.style.opacity="1";wrap.style.pointerEvents="all";
@@ -2359,19 +2349,22 @@ function showErr(msg){
   appLoaded_();   // an error is a result too — don't strand the header off-screen
 }
 
-// Ends the headerless loading state. Queued behind the gate lift: with a warm
-// cache this fires instantly, and dropping the header behind a closed gate would
-// waste the animation entirely.
+// Ends the headerless loading state.
 function appLoaded_(){
   if(!document.body.classList.contains("app-loading"))return;
-  afterReveal_(function(){
-    document.body.classList.remove("app-loading");
-    var h=document.querySelector(".hdr");
-    if(!h)return;
-    h.classList.remove("drop");
-    void h.offsetWidth;
-    h.classList.add("drop");
-  });
+  document.body.classList.remove("app-loading");
+
+  // Data beat the gate — the loader was never actually on screen, so there's
+  // nothing to transition FROM. Restoring the header now, behind the closed
+  // gate, means the page is already whole when it's revealed. Animating here
+  // would land after the lift and shove the content down: an unearned second pop.
+  if(revealBusy_)return;
+
+  var h=document.querySelector(".hdr");
+  if(!h)return;
+  h.classList.remove("drop");
+  void h.offsetWidth;
+  h.classList.add("drop");
 }
         
 function av(url,name,size,role){var fz=Math.round(size*.27),init=initials(name),col=C(role||"soundman").fg,fb='<span style="font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'">'+init+'</span>';if(!url)return fb;return'<img src="'+url+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;display:block" alt="'+esc(name)+'" onerror="this.outerHTML=\'<span style=font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'>'+init+'</span>\'">';}
