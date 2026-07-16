@@ -553,12 +553,15 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 }
 /* Starts hidden — .in is added by hideSplash(), so the form pops in only after
    the splash clears instead of animating underneath it. */
-.gate-inner{width:100%;max-width:360px;opacity:0}
+/* Hidden only while .in is absent — so once .in lands, the underlying opacity is
+   1 and gatePop's implicit end-keyframe can't yank it back to invisible. */
+.gate-inner{width:100%;max-width:360px}
+.gate-inner:not(.in){opacity:0}
 .gate-inner.in{animation:gatePop .62s cubic-bezier(.22,1.12,.36,1) both}
 @keyframes gatePop{
   0%  { opacity:0; transform:scale(.94) translateY(18px); }
   70% { opacity:1; transform:scale(1.01) translateY(-2px); }
-  100%{ transform:scale(1) translateY(0); }
+  100%{ opacity:1; transform:scale(1) translateY(0); }
 }
 .gate-logo{width:64px;height:64px;border-radius:20px;background:rgba(232,184,75,.13);border:1px solid rgba(232,184,75,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;overflow:hidden;animation:breathe 3s ease-in-out infinite}
 .gate-logo img{width:100%;height:100%;object-fit:cover;display:none}
