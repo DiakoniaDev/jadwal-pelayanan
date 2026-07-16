@@ -123,16 +123,11 @@ input, textarea {
 }
 
 /* ── HEADER — 32px sides ──── */
-/* Starts hidden — it sits behind the gate/splash at parse time, so playing the
-   slide-in there would be wasted. hdr-in is added by enterApp()/showGateAgain()
-   in sync with the gate's own reveal, so it replays every time you enter, not
-   just once on the very first (invisible) paint. */
-.hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;margin-bottom:16px;width:100%;transform-origin:top center;opacity:0}
-.hdr.hdr-in{animation:hdrSlideIn .7s cubic-bezier(.22,1,.36,1) both}
+.hdr{position:sticky;top:0;z-index:40;background:#12151c;border-bottom:1px solid rgba(255,255,255,.08);padding:28px var(--page-pad) 20px;margin-bottom:16px;width:100%;transform-origin:top center;animation:hdrSlideIn .5s cubic-bezier(.22,1,.36,1) both}
 @keyframes hdrSlideIn{
   0%  { opacity:0; transform:translateY(-46px) scaleY(.9); }
   60% { opacity:1; transform:translateY(4px) scaleY(1.02); }
-  100%{ opacity:1; transform:translateY(0) scaleY(1); }
+  100%{ transform:translateY(0) scaleY(1); }
 }
 .hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:0;}
 .menu-btn{width:36px;height:36px;border-radius:10px;background:none;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#f0f0f5;transition:background .15s;margin-left:-8px}
@@ -152,10 +147,10 @@ input, textarea {
 /* Slides in, then hands transform over to pillThrob. The pill starts display:none
    and only renders when setDeptHeader() fires, so the slide plays exactly once
    per login — no JS trigger needed. */
-#dept-pill{position:relative;animation:deptSlideIn .75s cubic-bezier(.22,1,.36,1) .1s both, pillThrob 2.6s ease-in-out .85s infinite}
-#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) .85s infinite}
+#dept-pill{position:relative;animation:deptSlideIn .55s cubic-bezier(.22,1,.36,1) both, pillThrob 2.6s ease-in-out .55s infinite}
+#dept-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;border:1.5px solid currentColor;pointer-events:none;animation:pillHalo 2.6s cubic-bezier(.22,1,.36,1) .55s infinite}
 @keyframes deptSlideIn{
-  0%  {opacity:0;transform:translateX(64px) scale(.9)}
+  0%  {opacity:0;transform:translateX(48px) scale(.9)}
   62% {opacity:1;transform:translateX(-4px) scale(1.03)}
   100%{opacity:1;transform:translateX(0) scale(1)}
 }
@@ -214,11 +209,11 @@ input, textarea {
 
 /* ── CONTENT — 32px sides ─── */
 .content{flex:1;padding-left:var(--page-pad);padding-right:var(--page-pad);padding-bottom:calc(env(safe-area-inset-bottom,0px)+72px);overflow-x:hidden;width:100%;box-sizing:border-box}
-#content{opacity:0;transform:translateY(20px) scale(.97);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+#content{opacity:0;transform:translateY(14px) scale(.985);transition:opacity .3s cubic-bezier(.22,1,.36,1),transform .36s cubic-bezier(.22,1,.36,1)}
 #content.ready{opacity:1;transform:translateY(0) scale(1)}
 
 /* ── HOME ─────────────────── */
-.home{padding:52px 0 28px;text-align:center;animation:homePop .6s cubic-bezier(.3,1.3,.5,1) both}
+.home{padding:52px 0 28px;text-align:center;animation:homePop .42s cubic-bezier(.34,1.56,.64,1) both}
 
 @keyframes homePop{
   0%  { opacity:0; transform:scale(.85) translateY(14px); }
@@ -231,7 +226,7 @@ input, textarea {
 .home-p{font-size:15px;color:#8890aa;line-height:1.65}
 
 /* ── VOL CARD ─────────────── */
-.vol-card{display:flex;align-items:center;gap:13px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:18px;padding:18px;margin-bottom:14px;transform-origin:top center;animation:slideDown .5s cubic-bezier(.3,1.3,.5,1) both;cursor:pointer}
+.vol-card{display:flex;align-items:center;gap:13px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:18px;padding:18px;margin-bottom:14px;transform-origin:top center;animation:slideDown .36s cubic-bezier(.34,1.56,.64,1) both;cursor:pointer}
 .vol-card:active{background:#171b24}
 .vol-card-switch{flex-shrink:0;color:#4a5070;align-self:center}
 @keyframes slideDown{
@@ -246,7 +241,7 @@ input, textarea {
 .vol-meta{font-size:13px;color:#8890aa;margin-top:10px}
 
 /* ── SCHED TABS ───────────── */
-.sched-tabs{display:flex;gap:5px;margin-bottom:16px;background:#12151c;border-radius:13px;padding:4px;border:1px solid rgba(255,255,255,.06);animation:tabsPop .48s cubic-bezier(.3,1.3,.5,1) .12s both}
+.sched-tabs{display:flex;gap:5px;margin-bottom:16px;background:#12151c;border-radius:13px;padding:4px;border:1px solid rgba(255,255,255,.06);animation:tabsPop .34s cubic-bezier(.34,1.56,.64,1) .08s both}
 @keyframes tabsPop{
   0% { opacity:0; transform:scale(.9); }
   60%{ opacity:1; transform:scale(1.03); }
@@ -256,7 +251,7 @@ input, textarea {
 .sched-tab.on{background:#222737;color:#f0f0f5}
 
 /* ── MONTH NAV ────────────── */
-.month-nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:12px;animation:navSlideIn .5s cubic-bezier(.22,1,.36,1) .18s both}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:12px;animation:navSlideIn .36s cubic-bezier(.22,1,.36,1) .14s both}
 @keyframes navSlideIn{
   0%{ opacity:0; transform:translateX(26px); }
   100%{ opacity:1; transform:translateX(0); }
@@ -267,7 +262,7 @@ input, textarea {
 .mon-btn:disabled{opacity:.22;cursor:default}
 
 /* ── MINI CALENDAR ────────── */
-.mini-cal{background:#12151c;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 10px 10px;margin-bottom:18px;transform-origin:top center;animation:calIn .55s cubic-bezier(.3,1.3,.5,1) .26s both}
+.mini-cal{background:#12151c;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 10px 10px;margin-bottom:18px;transform-origin:top center;animation:calIn .38s cubic-bezier(.34,1.56,.64,1) .20s both}
 @keyframes calIn{
   0%  { opacity:0; transform:translateY(-14px) scaleY(.88); }
   60% { opacity:1; transform:translateY(3px) scaleY(1.03); }
@@ -298,13 +293,13 @@ input, textarea {
 .ev-list{display:flex;flex-direction:column;gap:10px}
 
 /* ── EVENT CARD ───────────── */
-.ecard{background:#12151c;border:1.5px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;cursor:pointer;transition:border-color .2s,background .15s;transform-origin:top center;animation:cardBounce .58s cubic-bezier(.3,1.3,.5,1) both}
-.ecard:nth-child(1){animation-delay:.34s}
-.ecard:nth-child(2){animation-delay:.41s}
-.ecard:nth-child(3){animation-delay:.48s}
-.ecard:nth-child(4){animation-delay:.55s}
-.ecard:nth-child(5){animation-delay:.62s}
-.ecard:nth-child(n+6){animation-delay:.66s}
+.ecard{background:#12151c;border:1.5px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;cursor:pointer;transition:border-color .2s,background .15s;transform-origin:top center;animation:cardBounce .42s cubic-bezier(.34,1.56,.64,1) both}
+.ecard:nth-child(1){animation-delay:.28s}
+.ecard:nth-child(2){animation-delay:.33s}
+.ecard:nth-child(3){animation-delay:.38s}
+.ecard:nth-child(4){animation-delay:.43s}
+.ecard:nth-child(5){animation-delay:.48s}
+.ecard:nth-child(n+6){animation-delay:.50s}
 
 @keyframes cardBounce{
   0%  { opacity:0; transform:translateY(16px) scaleY(.9); }
@@ -361,7 +356,8 @@ input, textarea {
   60% { opacity:1; transform:translateY(1px) scaleY(1.03); }
   100%{ transform:translateY(0) scaleY(1); }
 }
-.roster-fadein{transform-origin:top;animation:rosterFadeIn .85s cubic-bezier(.16,1,.3,1) both}
+.roster-fadein{transform-origin:top;animation:rosterFadeIn .3s cubic-bezier(.34,1.56,.64,1) both}
+.roster-fadein{animation:rosterFadeIn 1.2s cubic-bezier(.16,1,.3,1) both}
 .roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#1a1e28;display:flex;flex-direction:column;gap:7px}
 .roster-spin{display:flex;align-items:center;gap:8px;font-size:13px;color:#8890aa;padding:4px}
 
@@ -399,11 +395,11 @@ input, textarea {
 
 /* ── CATATAN ──────────────── */
 .notes-list{display:flex;flex-direction:column;gap:12px;padding-top:6px}
-.note-card{background:#12151c;border:1.5px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;animation:noteSlideIn .5s cubic-bezier(.3,1.3,.5,1) both}
-.note-card:nth-child(1){animation-delay:.05s}
-.note-card:nth-child(2){animation-delay:.13s}
-.note-card:nth-child(3){animation-delay:.21s}
-.note-card:nth-child(n+4){animation-delay:.28s}
+.note-card{background:#12151c;border:1.5px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;animation:noteSlideIn .36s cubic-bezier(.34,1.56,.64,1) both}
+.note-card:nth-child(1){animation-delay:.03s}
+.note-card:nth-child(2){animation-delay:.09s}
+.note-card:nth-child(3){animation-delay:.15s}
+.note-card:nth-child(n+4){animation-delay:.20s}
 @keyframes noteSlideIn{
   0%  { opacity:0; transform:translateX(-24px) scale(.97); }
   60% { opacity:1; transform:translateX(3px) scale(1.01); }
@@ -416,7 +412,7 @@ input, textarea {
 .note-by{font-size:11px;color:#4a5070;margin-top:8px}
 
 /* ── MASUKAN ──────────────── */
-.fb-wrap{padding-top:6px;animation:fbPopIn .55s cubic-bezier(.3,1.3,.5,1) both}
+.fb-wrap{padding-top:6px;animation:fbPopIn .38s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes fbPopIn{
   0%  { opacity:0; transform:translateY(20px) scale(.96); }
   60% { opacity:1; transform:translateY(-2px) scale(1.01); }
@@ -439,7 +435,7 @@ textarea.form-inp{resize:vertical;min-height:110px;line-height:1.6}
 .fb-ok-p{font-size:14px;color:#8890aa;line-height:1.6}
 
 /* ── RINGKASAN (volunteer view) ── */
-.ring-wrap{animation:fadeUp .5s cubic-bezier(.22,1,.36,1)}
+.ring-wrap{animation:fadeUp .3s cubic-bezier(.22,1,.36,1)}
 .ring-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:20px}
 .ring-month-lbl{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.01em;color:#e8b84b}
 .ring-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid rgba(255,255,255,.08)}
@@ -457,7 +453,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .ring-save-btn:active{opacity:.85}
 
 /* ── KETERSEDIAAN (VOLUNTEER) ── */
-.av-wrap{animation:fadeUp .5s cubic-bezier(.22,1,.36,1)}
+.av-wrap{animation:fadeUp .3s cubic-bezier(.22,1,.36,1)}
 .av-vol-line{font-size:14px;color:#8890aa;margin:8px 0 14px}
 .av-vol-line b{color:#e8b84b;font-weight:600}
 .av-month-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
@@ -523,7 +519,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 /* .dept-pill (top-right header badge) used to be a plain inline label here — now defined near .hdr-l1 above with icon support */
 
 /* ── STATES ───────────────── */
-.empty{text-align:center;padding:40px 0;animation:emptyPop .46s cubic-bezier(.3,1.3,.5,1) both}
+.empty{text-align:center;padding:40px 0;animation:emptyPop .32s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes emptyPop{
   0% { opacity:0; transform:scale(.88); }
   60%{ opacity:1; transform:scale(1.04); }
@@ -545,29 +541,13 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── NATIVE SPLASH ──────────
-   Dissolves (scale + blur + fade) instead of a bare opacity cut, and is timed
-   in JS to fire in the same breath as the gate's own pop-in (see hideSplash())
-   so the two don't read as two separate, disconnected transitions. ── */
-#native-splash{position:fixed;inset:0;z-index:9999;background:#0a0c10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1),filter .6s cubic-bezier(.4,0,.2,1)}
-#native-splash.hide{opacity:0;transform:scale(1.06);filter:blur(5px);pointer-events:none}
-.splash-logo{width:64px;height:64px;border-radius:20px;background:rgba(232,184,75,.13);border:1px solid rgba(232,184,75,.22);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:breathe 3s ease-in-out infinite}
-.splash-logo img{width:100%;height:100%;object-fit:cover;display:block}
-
 /* ── ONBOARDING GATE ──────── */
-.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;opacity:1;transition:opacity .65s cubic-bezier(.4,0,.2,1),transform .65s cubic-bezier(.4,0,.2,1),filter .65s cubic-bezier(.4,0,.2,1)}
-/* "grand" exit when Masuk is tapped — the gate dissolves away (scale + blur + fade)
-   to reveal the main page underneath, instead of the old bare display:none swap. */
-.gate.closing{opacity:0;transform:scale(1.07);filter:blur(7px);pointer-events:none}
-/* Starts hidden (opacity:0, no animation) so it never plays its pop-in while still
-   buried behind the splash screen — see hideSplash(), which adds .gate-in the
-   moment the splash starts dissolving so both happen in one coordinated reveal. */
-.gate-inner{width:100%;max-width:360px;opacity:0}
-.gate-inner.gate-in{animation:gatePop .6s cubic-bezier(.3,1.2,.4,1) both}
+.gate{position:fixed;inset:0;z-index:280;background:#0a0c10;display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + var(--gate-top)) var(--page-pad) 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;opacity:1;transition:opacity .4s cubic-bezier(.22,1,.36,1)}
+.gate-inner{width:100%;max-width:360px;animation:gatePop .46s cubic-bezier(.34,1.56,.64,1) both}
 @keyframes gatePop{
   0%  { opacity:0; transform:scale(.9) translateY(16px); }
   60% { opacity:1; transform:scale(1.02) translateY(-2px); }
-  100%{ opacity:1; transform:scale(1) translateY(0); }
+  100%{ transform:scale(1) translateY(0); }
 }
 .gate-logo{width:64px;height:64px;border-radius:20px;background:rgba(232,184,75,.13);border:1px solid rgba(232,184,75,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;overflow:hidden;animation:breathe 3s ease-in-out infinite}
 .gate-logo img{width:100%;height:100%;object-fit:cover;display:none}
@@ -575,6 +555,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .gate-sub{font-size:14px;color:#8890aa;text-align:center;line-height:1.6;margin-bottom:30px}
 .gate select.form-inp{-webkit-appearance:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%238890aa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
 .gate select.form-inp:disabled{opacity:.4;cursor:default}
+.gate .srch{margin-bottom:0}
 .gate .sug{left:0;right:0}
 .gate-name-wrap{transition:opacity .2s}
 
@@ -587,20 +568,11 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .pane-load{padding:24px 14px;text-align:center}
 .pane-load .big-spin{margin:0 auto 10px}
 
-/* ── SHARED INLINE-LABEL FIELD (dept trigger + name search share this look) ── */
-.fld-lbl{font-size:13px;font-weight:600;color:#8890aa;white-space:nowrap;flex-shrink:0}
-.fld-sep{width:1px;align-self:stretch;margin:3px 0;background:rgba(255,255,255,.14);flex-shrink:0}
-.fld-body{flex:1;min-width:0;overflow:hidden}
-.fld-wrap{position:relative;display:flex;align-items:center;gap:10px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:0 14px;transition:border-color .2s,box-shadow .2s}
-.fld-wrap:focus-within{border-color:#e8b84b;box-shadow:0 0 0 3px rgba(232,184,75,.1)}
-.fld-input{flex:1;min-width:0;background:none;border:none;padding:14px 0;font-family:'DM Sans',sans-serif;font-size:16px;color:#f0f0f5;outline:none;-webkit-appearance:none;appearance:none}
-.fld-input::placeholder{color:#4a5070}
-
 /* ── GATE DEPT PICKER — same pill as the main header ── */
 .dept-pick{position:relative}
-.dept-trig{width:100%;min-height:48px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:9px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.dept-trig{width:100%;min-height:48px;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:13px;padding:9px 14px 9px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
 .dept-trig.on{border-color:#e8b84b;box-shadow:0 0 0 3px rgba(232,184,75,.1)}
-.dept-trig-ph{font-size:15px;color:#4a5070}
+.dept-trig-ph{font-size:15px;color:#4a5070;padding-left:4px}
 .dept-trig-chev{margin-left:auto;color:#8890aa;flex-shrink:0;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
 .dept-trig.on .dept-trig-chev{transform:rotate(180deg)}
 .dept-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:120;background:#12151c;border:1.5px solid rgba(255,255,255,.13);border-radius:14px;padding:6px;max-height:264px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;box-shadow:0 14px 44px rgba(0,0,0,.75);animation:popIn .16s cubic-bezier(.34,1.5,.64,1) both}
@@ -615,8 +587,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 </style>
 </head>
 <body>
-<div id="native-splash">
-  <div class="splash-logo" id="splash-logo-el"><img id="splash-logo-img" src="" alt="" style="display:none"></div>
+<div id="native-splash" style="position:fixed;inset:0;z-index:9999;background:#0a0c10;display:flex;align-items:center;justify-content:center;">
   <div class="big-spin"><span></span><span></span><span></span></div>
 </div>
 
@@ -624,14 +595,13 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
   <div class="gate-inner">
     <div class="gate-logo" id="gate-logo"><img id="gate-logo-img" src="" alt="" style="display:none"></div>
     <div class="gate-title" id="gate-title">Jadwal Pelayanan</div>
-    <div class="gate-sub" id="gate-sub">GMS Salatiga</div>
+    <div class="gate-sub">Pilih departemen dan nama kamu untuk masuk ke jadwal.</div>
 
     <div class="form-g">
+      <label class="form-lbl">Departemen</label>
       <div class="dept-pick">
         <div class="dept-trig" id="gate-dept-trig" onclick="toggleDeptMenu(event)">
-          <span class="fld-lbl">Departemen</span>
-          <span class="fld-sep"></span>
-          <span class="fld-body" id="gate-dept-body"><span class="dept-trig-ph">Pilih…</span></span>
+          <span id="gate-dept-body"><span class="dept-trig-ph">Pilih departemen…</span></span>
           <span class="dept-trig-chev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
         <div class="dept-menu" id="gate-dept-menu"></div>
@@ -639,10 +609,9 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     </div>
 
     <div class="form-g">
-      <div class="fld-wrap gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
-        <span class="fld-lbl">Nama</span>
-        <span class="fld-sep"></span>
-        <input class="fld-input" id="gate-name-inp" type="text" placeholder="Pilih departemen dulu…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
+      <label class="form-lbl">Nama</label>
+      <div class="srch gate-name-wrap" id="gate-name-wrap" style="opacity:.4;pointer-events:none">
+        <input class="form-inp" id="gate-name-inp" type="text" placeholder="Pilih departemen dulu…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" disabled oninput="onGateNameInput()">
         <div class="sug" id="gate-sug"></div>
       </div>
     </div>
@@ -685,7 +654,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     </div>
   </div>
 
-  <div class="content" id="content">
+  <div class="content ready" id="content">
     <div class="home"><div class="home-orb"><svg viewBox="0 0 24 24" fill="none" stroke="#e8b84b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="home-h">Welcome Home!</div><div class="home-p">Cari namamu untuk melihat<br>jadwal pelayananmu.</div></div>
   </div>
 </div>
@@ -754,39 +723,18 @@ Object.defineProperty(google.script, 'run', { get: function(){ return new GasRun
 
 var SPLASH_MIN_MS = 1200;
 var splashStart = Date.now();
-
-// Decoupled from splash removal on purpose: if this never runs, the gate (and
-// everything behind it) stays permanently invisible against the near-black
-// background — a silent "black screen, nothing opens" hang. Idempotent so the
-// safety-valve timeout below can't double-fire the animation.
-function revealGate_(){
-  var gi = document.querySelector('.gate-inner');
-  if(gi && !gi.classList.contains('gate-in')){
-    gi.classList.remove('gate-in'); void gi.offsetWidth; gi.classList.add('gate-in');
-  }
-}
-
 function hideSplash(){
   var el = document.getElementById('native-splash');
+  if(!el) return;
   var elapsed = Date.now() - splashStart;
   var wait = Math.max(0, SPLASH_MIN_MS - elapsed);
   setTimeout(function(){
-    revealGate_();
-    if(el){
-      el.classList.add('hide');
-      setTimeout(function(){ el.remove(); }, 650);
-    }
+    el.style.transition = 'opacity .35s ease';
+    el.style.opacity = '0';
+    setTimeout(function(){ el.remove(); }, 350);
   }, wait);
 }
-// This script tag sits at the end of <body>, so the DOM (including .gate-inner)
-// is already parsed by the time it runs — no need to wait for the 'load' event,
-// which also blocks on the Google Fonts + html2canvas CDN requests finishing.
-// That extra wait (previously harmless, since the gate used to auto-play its
-// pop-in via plain CSS regardless of JS/network timing) became load-bearing
-// once the reveal moved into JS, so a slow/blocked resource could strand
-// people on a black screen. Fire immediately, plus a hard fallback no matter what.
-hideSplash();
-setTimeout(revealGate_, 4000);
+window.addEventListener('load', hideSplash);
 
 // ============================================================
 //  APP TEMPLATE CONFIG — edit these when cloning for a new department
@@ -914,14 +862,13 @@ google.script.run.withSuccessHandler(function(c){
   document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
   document.getElementById("dr-church").textContent=church;
   document.getElementById("gate-title").textContent=APP_CONFIG.appTitle;
-  document.getElementById("gate-sub").textContent=church;
   st.rolesByDept=c.rolesByDept||{};
   st.structureByDept=c.structureByDept||{};
   st.cardTabsByDept=c.cardTabsByDept||{};
   st.departments=c.departments||Object.keys(st.rolesByDept);
   populateDeptFilter();
 if(c.logoUrl){
-  ["dr-logo","gate-logo-img","splash-logo-img"].forEach(function(id){
+  ["dr-logo","gate-logo-img"].forEach(function(id){
     var el=document.getElementById(id);
     if(el){
       el.style.display="block";
@@ -989,21 +936,6 @@ google.script.run.withSuccessHandler(function(list){
 function openDr(){document.getElementById("dr").classList.add("on");document.getElementById("ov").classList.add("on");}
 function closeDr(){document.getElementById("dr").classList.remove("on");document.getElementById("ov").classList.remove("on");}
 
-// #content's fade/scale-in transition only fires on a "ready" class TRANSITION
-// (none → ready). Every render used to just call classList.add("ready") without
-// ever removing it first, so after the very first paint the class was already
-// present and add() was a no-op — the entrance animation silently stopped firing
-// on every subsequent visit (tab switches, month nav, re-login...). This forces
-// a real off→on transition (with a reflow in between so the "off" frame commits)
-// every single time a pane renders.
-function markContentReady_(){
-  var el=document.getElementById("content");
-  if(!el)return;
-  el.classList.remove("ready");
-  void el.offsetWidth;
-  requestAnimationFrame(function(){ el.classList.add("ready"); });
-}
-
 function navTo(tab){
   st.mainTab=tab;closeDr();
   ["jadwal","ketersediaan","ringkasan","catatan","masukan"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
@@ -1057,7 +989,7 @@ function pickGateDept(d){
 
 function renderDeptTrigger_(d){
   var body=document.getElementById("gate-dept-body");
-  if(body)body.innerHTML=d?deptPillHTML(d):'<span class="dept-trig-ph">Pilih…</span>';
+  if(body)body.innerHTML=d?deptPillHTML(d):'<span class="dept-trig-ph">Pilih departemen…</span>';
   (st.departments||[]).forEach(function(x){
     var o=document.getElementById("dopt-"+safeId(x));
     if(o)o.classList.toggle("sel",x===d);
@@ -1132,12 +1064,8 @@ function enterApp(){
   var v=st.gateSelectedVol;
   if(!v)return;
   var g=document.getElementById("gate");
-  g.classList.add("closing");   // dissolves (scale+blur+fade) — see .gate.closing
-  // Replay the header's slide-in in lockstep with the gate dissolving, instead of
-  // it having already played (invisibly, at parse time) long before this moment.
-  var hdr=document.querySelector(".hdr");
-  if(hdr){ hdr.classList.remove("hdr-in"); void hdr.offsetWidth; hdr.classList.add("hdr-in"); }
-  setTimeout(function(){g.style.display="none";},680);
+  g.classList.add("closing");
+  setTimeout(function(){g.style.display="none";},420);
   loginAsVol(v);
 }
 
@@ -1219,7 +1147,9 @@ function renderJadwal(){
     '<div class="sched-tabs"><button class="sched-tab'+(st.schedTab==="jadwal"?" on":"")+'" onclick="switchST(\'jadwal\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</button><button class="sched-tab'+(st.schedTab==="riwayat"?" on":"")+'" onclick="switchST(\'riwayat\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat</button></div>'+
     (st.schedTab==="jadwal"?buildSched():buildRiwayat());
   document.getElementById("content").innerHTML=h;
-  markContentReady_();
+  requestAnimationFrame(function(){
+  document.getElementById("content").classList.add("ready");
+});
   loadCardExtras_();
 }
 
@@ -1490,7 +1420,7 @@ function toggleAvailNav(){
 
 function renderKetersediaan(){
   var content=document.getElementById("content");
-  markContentReady_();
+  content.classList.add("ready");
   if(!st.vol){
     content.innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk mengatur ketersediaan.</div></div>';
     return;
@@ -1990,7 +1920,9 @@ function renderRingkasan(){
     })
     .withFailureHandler(function(e){showErr(e.message);})
     .getPublicMonthData(st.ringYear,st.ringMonth,st.vol.dept);
-  markContentReady_();
+  requestAnimationFrame(function(){
+    document.getElementById("content").classList.add("ready");
+  });
 }
  
 function chRingMonth(dir){
@@ -2026,7 +1958,6 @@ function buildRingkasanUI(data){
   if(!satSun.length){
     h+='<div class="empty"><div class="empty-ico"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-msg">Belum ada data bulan ini.</div></div></div>';
     document.getElementById("content").innerHTML=h;
-    markContentReady_();
     return;
   }
 
@@ -2145,7 +2076,6 @@ function buildRingkasanUI(data){
 
   h+='</table></div></div></div>';
   document.getElementById("content").innerHTML=h;
-  markContentReady_();
 }
  
 
@@ -2190,10 +2120,12 @@ function renderCatatan(){
   if(!st.vol){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-msg">Cari namamu dulu di halaman Jadwal untuk melihat catatan.</div></div>';return;}
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat catatan…</div></div>';
   google.script.run.withSuccessHandler(function(notes){
-    if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';markContentReady_();return;}
+    if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';return;}
     var h='<div class="notes-list">';notes.forEach(function(n){h+='<div class="note-card">'+(n.tanggal?'<div class="note-date">'+esc(n.tanggal)+(n.oleh?' · '+esc(n.oleh):'')+'</div>':'')+(n.judul?'<div class="note-title">'+esc(n.judul)+'</div>':'')+(n.isi?'<div class="note-body">'+esc(n.isi).replace(/\n/g,'<br>')+'</div>':'')+'</div>';});h+='</div>';
     document.getElementById("content").innerHTML=h;
-    markContentReady_();
+    requestAnimationFrame(function(){
+      document.getElementById("content").classList.add("ready");
+    });
   }).withFailureHandler(function(e){showErr(e.message);}).getNotes(st.vol.dept);
 }
 
@@ -2201,7 +2133,9 @@ function renderCatatan(){
 function renderMasukan(){
   var pre=st.vol?st.vol.name:"";
   document.getElementById("content").innerHTML='<div class="fb-wrap"><div class="fb-title">Kritik &amp; Saran</div><div class="fb-sub">Masukan kamu sangat berarti untuk kemajuan tim. 🙏</div><div class="form-g"><label class="form-lbl">Nama</label><input class="form-inp" id="fb-n" type="text" placeholder="Nama kamu…" value="'+esc(pre)+'"></div><div class="form-g"><label class="form-lbl">Pesan</label><textarea class="form-inp" id="fb-p" placeholder="Tulis kritik atau saranmu di sini…"></textarea></div><button class="sub-btn" id="fb-btn" onclick="kirimMasukan()">Kirim Masukan</button></div>';
-  markContentReady_();
+  requestAnimationFrame(function(){
+    document.getElementById("content").classList.add("ready");
+  });
 }
 function kirimMasukan(){
   var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){alert("Pesan tidak boleh kosong.");return;}
@@ -2235,7 +2169,7 @@ function logoutToGate(){
   toggleAvailNav();
   setDeptHeader(null);
   document.getElementById("content").innerHTML=homeHTML();
-  markContentReady_();
+  document.getElementById("content").classList.add("ready");
   showGateAgain();
 }
 
@@ -2244,8 +2178,6 @@ function showGateAgain(){
   if(!g)return;
   g.classList.remove("closing");
   g.style.display="flex";
-  var hdr=document.querySelector(".hdr");
-  if(hdr)hdr.classList.remove("hdr-in");   // reset so the next enterApp() replays it
   hideDeptMenu();
   setGateDept_("");   // resets trigger, name field, and the Masuk button in one go
 }
@@ -2272,7 +2204,7 @@ function homeHTML(){return'<div class="home"><div class="home-orb"><svg viewBox=
 function showLoading(){
   var el=document.getElementById("content");
   el.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
-  markContentReady_();
+  el.classList.add("ready");
 }
 
 function showErr(msg){document.getElementById("content").innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-msg">'+esc(msg)+'</div></div>';}
