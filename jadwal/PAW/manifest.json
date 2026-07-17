@@ -1,7 +1,7 @@
 {
-  "name": "Jadwal Pelayanan",
-  "short_name": "Jadwal Pelayanan",
-  "description": "Jadwal pelayanan - GMS Salatiga",
+  "name": "Volunteer App",
+  "short_name": "Volunteer App",
+  "description": "Volunteer App - GMS Salatiga",
   "start_url": "/jadwal-pelayanan/jadwal/PAW/",
   "scope": "/jadwal-pelayanan/jadwal/PAW/",
   "display": "fullscreen",
