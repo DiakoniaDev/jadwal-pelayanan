@@ -648,7 +648,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tsl-card.has .tsl-count{color:#4ade80}
 .tsl-arrow{color:#4a5070;flex-shrink:0}
 .tsl-daygroup{margin-bottom:20px}
-.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#8890aa;margin-bottom:10px}
+.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#e8b84b;margin-top:22px;margin-bottom:10px}
 /* songlist editor (slide-in) */
 .tool-editor{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100;background:#0d0f14;transform:translateX(100%);visibility:hidden;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s linear .32s;display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
 .tool-editor.on{transform:translateX(0);visibility:visible;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s}
@@ -676,9 +676,9 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tdc-dept-tabs{display:flex;gap:5px;background:#12151c;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:5px;margin-bottom:16px}
 .tdc-dept-tab{flex:1;padding:11px 0;border:none;border-radius:10px;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .18s}
 .tdc-dept-tab.on{box-shadow:inset 0 0 0 1px currentColor}
-.tdc-week{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8890aa;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:20px;margin-left:7px}
+.tdc-week{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#e8b84b;background:rgba(232,184,75,.15);padding:2px 7px;border-radius:20px;margin-left:7px}
 .tdc-daygroup{margin-bottom:20px}
-.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:18px;margin-bottom:10px}
+.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:22px;margin-bottom:10px}
 .tdc-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px}
 .tdc-card.has{border-color:rgba(74,222,128,.3)}
 .tdc-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
@@ -1369,6 +1369,10 @@ function gotEvents(resp){
 // Role-based tool nav
   st.isWL = !!(st.vol && st.vol.roles && st.vol.roles.indexOf("WL") !== -1 && dept === "PAW");
   st.isQC = !!(st.vol && st.vol.roles && st.vol.roles.indexOf("Stylist") !== -1 && dept === "CM");
+
+  // Prefetch tool data so the pages open instantly
+  if(st.isWL) prefetchToolSonglist();
+  if(st.isQC){ prefetchToolDresscode(); prefetchToolSelfie(); }
   var slNav = document.getElementById("dn-tool-songlist");
   if (slNav) slNav.style.display = st.isWL ? "flex" : "none";
   var dcNav = document.getElementById("dn-tool-dresscode");
@@ -2399,6 +2403,36 @@ function kirimMasukan(){
 var SAT_TEMPLATES=[{service:"Voltage",time:"13:00"},{service:"AOG Teens",time:"16:00"},{service:"AOG Youth",time:"18:30"}];
 var SUN_TEMPLATES=[{service:"Umum 1",time:"07:00"},{service:"Umum 2",time:"09:30"},{service:"Umum 3",time:"17:00"}];
 
+/* ── TOOL PREFETCHERS (fire once on login, warm caches) ────── */
+function prefetchToolSonglist(){
+  var y=st.viewYear,m=st.viewMonth,mkey=y+"-"+m;
+  if(st.toolSongCardsKey===mkey)return;
+  google.script.run.withSuccessHandler(function(res){
+    st.toolSongCards=(res&&res.cards)||[];st.toolSongCardsKey=mkey;
+  }).withFailureHandler(function(){}).getSonglistCards(y,m);
+}
+
+function prefetchToolDresscode(){
+  var dept=st.toolDressDept||(st.toolDressDepts&&st.toolDressDepts[0])||"PAW";
+  st.toolDressDept=dept;
+  var ckey=st.viewYear+"-"+st.viewMonth+"|"+dept;
+  if(st._toolDressByKey&&st._toolDressByKey[ckey])return;
+  callApi('getDresscodeList',[st.viewYear,st.viewMonth,dept]).then(function(res){
+    st.toolDressDepts=(res&&res.depts)||["PAW","Usher"];
+    if(st.toolDressDepts.indexOf(st.toolDressDept)===-1)st.toolDressDept=st.toolDressDepts[0];
+    st.toolDressList=generateDressSlotsVol(st.viewYear,st.viewMonth,(res&&res.items)||[]);
+    if(!st._toolDressByKey)st._toolDressByKey={};
+    st._toolDressByKey[st.viewYear+"-"+st.viewMonth+"|"+st.toolDressDept]={list:st.toolDressList,depts:st.toolDressDepts};
+  }).catch(function(){});
+}
+
+function prefetchToolSelfie(){
+  if(st._toolSelfieLoaded)return;
+  callApi('getSelfieQueue',[st.vol.name]).then(function(res){
+    st.toolSelfieItems=(res&&res.items)||[];st._toolSelfieLoaded=true;
+  }).catch(function(){});
+}
+        
 /* ── WL SONGLIST TOOL ───────────────────────────────────────── */
 function renderToolSonglist(){
   if(!st.isWL){document.getElementById("content").innerHTML='<div class="tsq-empty">Fitur ini hanya untuk WL.</div>';return;}
@@ -2604,7 +2638,7 @@ function buildToolDresscodePage(){
         h+='<div class="tdc-card'+(has?" has":"")+'"><div class="tdc-card-top"><div><div class="tdc-svc">'+esc(it.service)+
           '<span class="tdc-week">Week '+dressWeekVol_(it.date)+'</span>'+
           (it.isCustom?'<span class="tdc-custom-tag">Manual</span>':'')+'</div></div>'+
-          '<span class="tdc-stat '+(has?"has":"none")+'">'+(has?"✅ Ada":"— Kosong")+'</span></div>'+
+          '<span class="tdc-stat '+(has?"has":"none")+'">'+(has?"Terisi":"— Kosong")+'</span></div>'+
           '<input class="tdc-url-inp" type="text" id="tdc-url-'+i+'" placeholder="Tempel link PDF…" value="'+esc(it.pdfUrl||"")+'" oninput="onToolDressInput('+i+')">'+
           '<div class="tdc-row-actions"><button class="tdc-save" id="tdc-save-'+i+'" onclick="saveToolDresscode('+i+')" disabled>Simpan ✓</button>'+
           (has?'<a class="tdc-open" href="'+encodeURI(it.pdfUrl)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Buka</a>':'')+
