@@ -767,7 +767,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     <div><div class="dr-church" id="dr-church">GMS Salatiga</div><div class="dr-team" id="dr-team">Jadwal Pelayanan PAW</div></div>
   </div>
   <nav class="dr-nav">
-    <div class="dr-item on" id="dn-jadwal" onclick="navTo('jadwal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</div>
+    <div class="dr-item on" id="dn-jadwal" onclick="navTo('jadwal')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Beranda</div>
     <div class="dr-item" id="dn-tool-songlist" style="display:none" onclick="navTo('tool-songlist')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Atur Songlist</div>
     <div class="dr-item" id="dn-tool-dresscode" style="display:none" onclick="navTo('tool-dresscode')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>Atur Dresscode</div>
     <div class="dr-item" id="dn-tool-selfie" style="display:none" onclick="navTo('tool-selfie')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Approval Selfie</div>      
@@ -783,7 +783,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
     <div class="hdr-top">
       <button class="menu-btn" onclick="openDr()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <div class="hdr-text">
-        <div class="hdr-l1" id="hdr-l1">Jadwal<br>Pelayanan</div>
+        <div class="hdr-l1" id="hdr-l1">Beranda</div>
       </div>
       <div class="dept-pill" id="dept-pill" style="display:none">
         <span class="dept-pill-icon" id="dept-pill-icon"></span>
@@ -1029,7 +1029,7 @@ function titleTwoLines(text){
 
 google.script.run.withSuccessHandler(function(c){
   var church=c.churchName||"GMS Salatiga";
-  document.getElementById("hdr-l1").innerHTML=titleTwoLines(APP_CONFIG.appTitle);
+  document.getElementById("hdr-l1").innerHTML=titleTwoLines("Beranda");
   document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
   document.getElementById("dr-church").textContent=church;
   document.getElementById("gate-title").textContent=APP_CONFIG.appTitle;
@@ -1101,10 +1101,27 @@ google.script.run.withSuccessHandler(function(list){
 function openDr(){document.getElementById("dr").classList.add("on");document.getElementById("ov").classList.add("on");}
 function closeDr(){document.getElementById("dr").classList.remove("on");document.getElementById("ov").classList.remove("on");}
 
+var PAGE_TITLES = {
+  "jadwal":         "Beranda",
+  "tool-songlist":  "Atur Songlist",
+  "tool-dresscode": "Atur Dresscode",
+  "tool-selfie":    "Approval Selfie",
+  "ketersediaan":   "Ketersediaan",
+  "ringkasan":      "Ringkasan",
+  "catatan":        "Catatan",
+  "masukan":        "Kritik & Saran"
+};
+
+function updateHeaderTitle_(tab){
+  var title = PAGE_TITLES[tab] || "Beranda";
+  document.getElementById("hdr-l1").innerHTML = titleTwoLines(title);
+}
+        
 function navTo(tab){
   st.mainTab=tab;closeDr();
- ["jadwal","tool-songlist","tool-dresscode","tool-selfie","ketersediaan","ringkasan","catatan","masukan"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
-  contentOut_();   // reset the fade so EVERY page entry animates in, not just the first
+  ["jadwal","tool-songlist","tool-dresscode","tool-selfie","ketersediaan","ringkasan","catatan","masukan"].forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
+  updateHeaderTitle_(tab);
+  contentOut_();
   if(tab==="jadwal")renderJadwal();
   else if(tab==="tool-songlist")renderToolSonglist();
   else if(tab==="tool-dresscode")renderToolDresscode();
@@ -1288,14 +1305,6 @@ function enterApp(){
   document.body.classList.add("app-in");
   loginAsVol(v);
   contentInstant_();
-  // Header drop — don't wait for schedule data, the vol card is already painted
-  var hdrEl=document.querySelector(".hdr");
-  if(hdrEl&&!hdrEl.classList.contains("drop")){
-    document.body.classList.remove("app-loading");
-    hdrEl.classList.remove("drop");
-    void hdrEl.offsetWidth;
-    hdrEl.classList.add("drop");
-  }
 
   if(g){
     g.classList.add("closing");
@@ -1352,18 +1361,14 @@ function loginAsVol(v){
   st.vol=v;st.openKey=null;st.rosterCache={};
   try{localStorage.setItem(APP_CONFIG.storagePrefix + "volName", v.name);}catch(e){console.warn("localStorage set failed",e);}
 
-  // Show the vol card + skeleton IMMEDIATELY — the schedule fills in behind it.
-  // This replaces the old full-page spinner, so Masuk never feels blank.
-  var dept=v.dept;
-  if(dept&&st.structureByDept[dept])ROST=st.structureByDept[dept];
-  if(dept&&st.rolesByDept[dept])PAW_ROLES=st.rolesByDept[dept];
-
-  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
-    '<div style="display:flex;flex-direction:column;align-items:center;padding:40px 0"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
-  document.getElementById("content").innerHTML=h;
-  contentReady_();
-
-  fetchSchedule_(v.name,gotEvents,function(e){showErr(e.message);});
+  // Warm cache (prefetched on name pick) → skip the spinner entirely.
+  // Cold cache → full-page spinner with header hidden for a clean look.
+  if(st.schedCache[v.name]){
+    fetchSchedule_(v.name,gotEvents,function(e){showErr(e.message);});
+  } else {
+    showLoading();
+    fetchSchedule_(v.name,gotEvents,function(e){showErr(e.message);});
+  }
 }
 
 // Fetches the dept-scoped availability-open-months list and shows/hides the
@@ -1384,6 +1389,7 @@ function gotEvents(resp){
   if (dept && st.structureByDept[dept]) ROST = st.structureByDept[dept];
   if (dept && st.rolesByDept[dept]) PAW_ROLES = st.rolesByDept[dept];
   setDeptHeader(dept);
+  updateHeaderTitle_(st.mainTab||"jadwal");
   st.allEvents=mergeServiceGroups_(events);var now=new Date();st.viewYear=now.getFullYear();st.viewMonth=now.getMonth();
 // Role-based tool nav
   st.isWL = !!(st.vol && st.vol.roles && st.vol.roles.indexOf("WL") !== -1 && dept === "PAW");
@@ -2896,6 +2902,7 @@ function logoutToGate(){
   toggleAvailNav();
   ["dn-tool-songlist","dn-tool-dresscode","dn-tool-selfie"].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display="none";});
   setDeptHeader(null);
+  document.getElementById("hdr-l1").innerHTML=titleTwoLines("Beranda");
   document.body.classList.remove("app-in");
   document.body.classList.remove("app-loading");
   var hdrEl=document.querySelector(".hdr");
@@ -2958,6 +2965,7 @@ function contentReady_(){
 }
 
 function showLoading(){
+  document.body.classList.add("app-loading");
   contentOut_();
   var el=document.getElementById("content");
   el.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
