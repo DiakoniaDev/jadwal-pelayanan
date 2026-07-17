@@ -648,7 +648,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tsl-card.has .tsl-count{color:#4ade80}
 .tsl-arrow{color:#4a5070;flex-shrink:0}
 .tsl-daygroup{margin-bottom:20px}
-.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#e8b84b;margin-top:22px;margin-bottom:10px}
+.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#e8b84b;margin-top:30px;margin-bottom:10px}
 /* songlist editor (slide-in) */
 .tool-editor{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100;background:#0d0f14;transform:translateX(100%);visibility:hidden;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s linear .32s;display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
 .tool-editor.on{transform:translateX(0);visibility:visible;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s}
@@ -678,7 +678,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tdc-dept-tab.on{box-shadow:inset 0 0 0 1px currentColor}
 .tdc-week{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#e8b84b;background:rgba(232,184,75,.15);padding:2px 7px;border-radius:20px;margin-left:7px}
 .tdc-daygroup{margin-bottom:20px}
-.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:22px;margin-bottom:10px}
+.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:30px;margin-bottom:10px}
 .tdc-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px}
 .tdc-card.has{border-color:rgba(74,222,128,.3)}
 .tdc-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
@@ -1286,8 +1286,16 @@ function enterApp(){
   // setDeptHeader would otherwise fire while revealBusy_ is still false.
   revealBusy_=true;
   document.body.classList.add("app-in");
-  loginAsVol(v);      // paints the loader (or the cached schedule) behind the gate
-  contentInstant_();  // …and makes sure it's actually on screen before the lift
+  loginAsVol(v);
+  contentInstant_();
+  // Header drop — don't wait for schedule data, the vol card is already painted
+  var hdrEl=document.querySelector(".hdr");
+  if(hdrEl&&!hdrEl.classList.contains("drop")){
+    document.body.classList.remove("app-loading");
+    hdrEl.classList.remove("drop");
+    void hdrEl.offsetWidth;
+    hdrEl.classList.add("drop");
+  }
 
   if(g){
     g.classList.add("closing");
@@ -1342,8 +1350,19 @@ function prefetchSchedule_(name){
 
 function loginAsVol(v){
   st.vol=v;st.openKey=null;st.rosterCache={};
-  showLoading();
   try{localStorage.setItem(APP_CONFIG.storagePrefix + "volName", v.name);}catch(e){console.warn("localStorage set failed",e);}
+
+  // Show the vol card + skeleton IMMEDIATELY — the schedule fills in behind it.
+  // This replaces the old full-page spinner, so Masuk never feels blank.
+  var dept=v.dept;
+  if(dept&&st.structureByDept[dept])ROST=st.structureByDept[dept];
+  if(dept&&st.rolesByDept[dept])PAW_ROLES=st.rolesByDept[dept];
+
+  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
+    '<div style="display:flex;flex-direction:column;align-items:center;padding:40px 0"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
+  document.getElementById("content").innerHTML=h;
+  contentReady_();
+
   fetchSchedule_(v.name,gotEvents,function(e){showErr(e.message);});
 }
 
@@ -1383,6 +1402,7 @@ function gotEvents(resp){
   refreshAvailNav_(dept);
   renderJadwal();
   prefetchNotes_(dept);
+  prefetchRingkasan_(dept);
 }
 
 function prefetchNotes_(dept){
@@ -1391,6 +1411,26 @@ function prefetchNotes_(dept){
     st.notesCache[dept]=notes||[];
   }).withFailureHandler(function(){}).getNotes(dept);
 }
+
+function prefetchRingkasan_(dept){
+  if(!dept)return;
+  // Prefetch current month + previous + next so all three open instantly
+  var months=[
+    {y:st.ringYear, m:st.ringMonth},
+    prevMonth_(st.ringYear, st.ringMonth),
+    nextMonth_(st.ringYear, st.ringMonth)
+  ];
+  months.forEach(function(mo){
+    var ck=dept+"|"+mKey(mo.y,mo.m);
+    if(st.ringCache[ck])return;
+    google.script.run.withSuccessHandler(function(data){
+      st.ringCache[ck]=data;
+    }).withFailureHandler(function(){}).getPublicMonthData(mo.y,mo.m,dept);
+  });
+}
+
+function prevMonth_(y,m){m--;if(m<0){m=11;y--;}return{y:y,m:m};}
+function nextMonth_(y,m){m++;if(m>11){m=0;y++;}return{y:y,m:m};}   
         
 /* ── JADWAL TAB ── */
 function renderJadwal(){
@@ -2180,6 +2220,15 @@ function chRingMonth(dir){
   if(st.ringMonth>11){st.ringMonth=0;st.ringYear++;}
   if(st.ringMonth<0){st.ringMonth=11;st.ringYear--;}
   renderRingkasan();
+  // Prefetch the month BEYOND the new one so the next tap is instant
+  var dept=st.vol&&st.vol.dept;
+  if(dept){
+    var ahead=dir>0?nextMonth_(st.ringYear,st.ringMonth):prevMonth_(st.ringYear,st.ringMonth);
+    var ck=dept+"|"+mKey(ahead.y,ahead.m);
+    if(!st.ringCache[ck]){
+      google.script.run.withSuccessHandler(function(data){st.ringCache[ck]=data;}).withFailureHandler(function(){}).getPublicMonthData(ahead.y,ahead.m,dept);
+    }
+  }
 }
  
 function buildRingkasanUI(data){
@@ -2413,16 +2462,29 @@ function prefetchToolSonglist(){
 }
 
 function prefetchToolDresscode(){
-  var dept=st.toolDressDept||(st.toolDressDepts&&st.toolDressDepts[0])||"PAW";
-  st.toolDressDept=dept;
-  var ckey=st.viewYear+"-"+st.viewMonth+"|"+dept;
-  if(st._toolDressByKey&&st._toolDressByKey[ckey])return;
-  callApi('getDresscodeList',[st.viewYear,st.viewMonth,dept]).then(function(res){
-    st.toolDressDepts=(res&&res.depts)||["PAW","Usher"];
-    if(st.toolDressDepts.indexOf(st.toolDressDept)===-1)st.toolDressDept=st.toolDressDepts[0];
-    st.toolDressList=generateDressSlotsVol(st.viewYear,st.viewMonth,(res&&res.items)||[]);
-    if(!st._toolDressByKey)st._toolDressByKey={};
-    st._toolDressByKey[st.viewYear+"-"+st.viewMonth+"|"+st.toolDressDept]={list:st.toolDressList,depts:st.toolDressDepts};
+  if(!st._toolDressByKey)st._toolDressByKey={};
+  var y=st.viewYear,m=st.viewMonth;
+  // Fetch the first dept to get the depts list, then fetch the rest
+  var first=st.toolDressDept||(st.toolDressDepts&&st.toolDressDepts[0])||"PAW";
+  st.toolDressDept=first;
+  var ckey1=y+"-"+m+"|"+first;
+  if(st._toolDressByKey[ckey1])return;
+  callApi('getDresscodeList',[y,m,first]).then(function(res){
+    var depts=(res&&res.depts)||["PAW","Usher"];
+    st.toolDressDepts=depts;
+    if(depts.indexOf(st.toolDressDept)===-1)st.toolDressDept=depts[0];
+    var list=generateDressSlotsVol(y,m,(res&&res.items)||[]);
+    st.toolDressList=list;
+    st._toolDressByKey[y+"-"+m+"|"+first]={list:list,depts:depts};
+    // Prefetch every other dept in background
+    depts.forEach(function(d){
+      if(d===first)return;
+      var ck=y+"-"+m+"|"+d;
+      if(st._toolDressByKey[ck])return;
+      callApi('getDresscodeList',[y,m,d]).then(function(r2){
+        st._toolDressByKey[ck]={list:generateDressSlotsVol(y,m,(r2&&r2.items)||[]),depts:depts};
+      }).catch(function(){});
+    });
   }).catch(function(){});
 }
 
@@ -2896,7 +2958,6 @@ function contentReady_(){
 }
 
 function showLoading(){
-  document.body.classList.add("app-loading");   // header off — the loader owns the screen
   contentOut_();
   var el=document.getElementById("content");
   el.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat jadwal…</div></div>';
