@@ -1203,11 +1203,15 @@ function submitKey(ev){
     if (data && data.ok){
       setAdminDept(dept);
       setAdminKey(key);
-      applyDeptLabels();
-      hideLock();
-      // The eager load below the shim may already have this dept's data warm —
-      // skip the round trip so Masuk lands instantly instead of re-fetching.
-      if (st.loaded && st.dept === dept) renderTab(); else loadData();
+      // Don't hide lock yet — keep spinner on button until data is ready
+      setLockBusy(true);
+      if (st.loaded && st.dept === dept) {
+        applyDeptLabels();
+        hideLock();
+        renderTab();
+      } else {
+        loadDataThenReveal_();
+      }
     } else {
       setAdminKey('');
       if (err) err.textContent = (data && data.message) || 'Password salah.';
@@ -1327,21 +1331,101 @@ function C(r){return RC[(r||"").toLowerCase()]||RC.soundman;}
 function roleLabel(r){var map={"Soundman":"Sound","Sequencer":"Seq"};return map[r]||r;}
 function serviceLabel(s){return s;}
 
-var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},subState:{},origService:"",origTime:"",origSpecial:false,loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending",selfieGroup:"",dressList:[],songGroup:"",songDate:"",songGroupList:[],songCards:[],songIdx:null,songCardsKey:""};
+var _adminDataCache={};   // year-month → getAdminData response (Jadwal/Ringkasan/Masukan all read from this)
 
+var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},subState:{},origService:"",origTime:"",origSpecial:false,loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending",selfieGroup:"",dressList:[],songGroup:"",songDate:"",songGroupList:[],songCards:[],songIdx:null,songCardsKey:"",notesCache:null,availCache:{}};
 (function(){var now=new Date();st.year=now.getFullYear();st.month=now.getMonth();st.availYear=now.getFullYear();st.availMonth=now.getMonth();if(ADMIN_KEY&&ADMIN_DEPT)loadData();})();
 
 function loadData(){
   st.dept=ADMIN_DEPT;
+  var key=st.year+"-"+st.month;
+  if(_adminDataCache[key]){
+    onDataLoaded(_adminDataCache[key]);
+    prefetchAdjacentJadwalMonths_();
+    return;
+  }
   document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat data bulan ini…</div></div>';
   google.script.run
-    .withSuccessHandler(onDataLoaded)
+    .withSuccessHandler(function(data){
+      _adminDataCache[key]=data;
+      onDataLoaded(data);
+      prefetchAdjacentJadwalMonths_();
+    })
     .withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="empty-state">Gagal memuat: '+esc(e.message)+'</div>';})
     .getAdminData(st.year,st.month);
 }
 
+function loadDataThenReveal_(){
+  st.dept=ADMIN_DEPT;
+  var key=st.year+"-"+st.month;
+  if(_adminDataCache[key]){
+    onDataLoaded(_adminDataCache[key]);
+    applyDeptLabels();
+    setLockBusy(false);
+    hideLock();
+    prefetchAdjacentJadwalMonths_();
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(data){
+      _adminDataCache[key]=data;
+      onDataLoaded(data);
+      applyDeptLabels();
+      setLockBusy(false);
+      hideLock();
+      prefetchAdjacentJadwalMonths_();
+    })
+    .withFailureHandler(function(e){
+      setLockBusy(false);
+      var err=document.getElementById("lock-err");
+      if(err)err.textContent="Gagal memuat data: "+(e&&e.message||e);
+    })
+    .getAdminData(st.year,st.month);
+}        
+
+// A write (save roster, auto-assign, delete service, add event) changes
+// data.services underneath the cache, but the cache object is never re-fetched
+// after a local mutation — so drop it. Next visit to this month re-fetches fresh.
+function invalidateCurrentMonthCache_(){
+  delete _adminDataCache[st.year+"-"+st.month];
+}
+
+function prevMonth_(y,m){m--;if(m<0){m=11;y--;}return{y:y,m:m};}
+function nextMonth_(y,m){m++;if(m>11){m=0;y++;}return{y:y,m:m};}
+
+// Fires in the background right after a month loads — by the time the admin
+// taps ‹ or ›, that month is usually already warm.
+function prefetchAdjacentJadwalMonths_(){
+  [prevMonth_(st.year,st.month),nextMonth_(st.year,st.month)].forEach(function(mo){
+    var k=mo.y+"-"+mo.m;
+    if(_adminDataCache[k])return;
+    google.script.run.withSuccessHandler(function(data){_adminDataCache[k]=data;}).withFailureHandler(function(){}).getAdminData(mo.y,mo.m);
+  });
+}
+
+function prefetchNotes_(){
+  if(st.notesCache)return;   // dept-scoped, not month-scoped — fetch once per session
+  google.script.run.withSuccessHandler(function(notes){st.notesCache=notes||[];}).withFailureHandler(function(){}).getNotes();
+}
+
+function prefetchAvailCurrent_(){
+  var key=st.availYear+"-"+st.availMonth;
+  if(st.availCache[key])return;
+  google.script.run.withSuccessHandler(function(data){st.availCache[key]=data;}).withFailureHandler(function(){}).getAvailabilityMatrix(st.availYear,st.availMonth);
+}
+
+function prefetchAdjacentAvailMonths_(){
+  [prevMonth_(st.availYear,st.availMonth),nextMonth_(st.availYear,st.availMonth)].forEach(function(mo){
+    var k=mo.y+"-"+mo.m;
+    if(st.availCache[k])return;
+    google.script.run.withSuccessHandler(function(data){st.availCache[k]=data;}).withFailureHandler(function(){}).getAvailabilityMatrix(mo.y,mo.m);
+  });
+}
+        
 function onDataLoaded(data){
   st.data=data;st.loaded=true;
+  prefetchNotes_();
+  prefetchAvailCurrent_();
   console.log("groups:",JSON.stringify(data.groups));
   applyDeptLabels();
   if(data.churchName){document.getElementById("dr-church").textContent=data.churchName;}
@@ -1475,7 +1559,7 @@ function renderJadwal(){
     var dayFull=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
     h+='<div class="day-group"><div class="day-group-hdr">'+esc(dayFull)+'</div><div class="ev-cards">';
     dg.slots.forEach(function(slot){
-      var filled=countFilled(slot),total=PAW_ROLES.filter(function(r){return!(r==="Speaker"&&st.dept!=="PAW");}).length;
+      var filled=countFilled(slot),total=PAW_ROLES.filter(function(r){return !(r==="Speaker"&&st.dept!=="PAW");}).length;
       var bcls="badge-empty",btxt="Kosong";
       if(filled===total){bcls="badge-full";btxt="Lengkap";}else if(filled>0){bcls="badge-partial";btxt=filled+"/"+total;}
       var ccls="ev-card"+(filled===total?" filled":filled>0?" partial":" empty-tmpl");
@@ -1557,6 +1641,7 @@ function addNewEvent(){
       if(res&&res.ok){
         st.slots.push({date:dv,day:dn,time:tv,service:sv,slots:{},key:key,isCustom:true,isSpecial:isSpecial});
         st.slots.sort(function(a,b){return (a.date+a.time+a.service).localeCompare(b.date+b.time+b.service);});
+        invalidateCurrentMonthCache_();
         toggleAddForm();
         renderJadwal();
         showToast("Ibadah ditambahkan.","ok");
@@ -1704,8 +1789,7 @@ function renderRosterPage(){
         '<div class="rs-inputs" id="rs-inputs-'+safeId(role)+'">';
       var names=st.rosterState[role]||[""];
       names.forEach(function(name,ni){h+=renderInputRow(role,ni,name);});
-      if(role==="Singer")h+='<button class="rs-add-btn" onclick="addSinger()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Singer</button>';
-      if(role==="Soundman")h+='<button class="rs-add-btn" onclick="addSoundman()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Soundman</button>';
+      if(isMultiRole_(role)&&canAddMore_(role))h+=addBtnHTML_(role);
       h+='</div></div>';
     });
   });
@@ -1739,8 +1823,7 @@ function renderInputRow(role,idx,sel){
         'data-role="'+esc(role)+'" data-idx="'+idx+'">'+
       '<div class="rs-dd-list" id="rs-ddlist-'+sr+'-'+idx+'"></div>'+
     '</div>';
-  if(role==="Singer")h+='<button class="rs-remove-btn" onclick="removeSinger('+idx+')">×</button>';
-  if(role==="Soundman")h+='<button class="rs-remove-btn" onclick="removeSoundman('+idx+')">×</button>';
+  if(isMultiRole_(role)&&(st.rosterState[role]||[]).length>1)h+='<button class="rs-remove-btn" onclick="removeMultiRole(\''+escQ(role)+'\','+idx+')">×</button>';
   h+='</div>';
   var _sub=(st.subState&&st.subState[role]&&st.subState[role][idx])||"";
   if(_sub)h+='<div class="rs-sub-hint" id="rs-subhint-'+sr+'-'+idx+'">&#8618; digantikan oleh <b>'+esc(_sub)+'</b> <button type="button" onclick="clearSub(\''+escQ(role)+'\','+idx+')" title="Batalkan pergantian" style="margin-left:6px;border:none;background:none;color:#ff6b7a;font-size:13px;cursor:pointer;padding:0 4px">&times;</button></div>';
@@ -1937,51 +2020,41 @@ function onDocClick(e){
   else document.addEventListener('click',onDocClick,{once:true,capture:true});
 }
 
-function addSinger(){
-  if(!st.rosterState["Singer"])st.rosterState["Singer"]=[""];
-  st.rosterState["Singer"].push("");
-  if(st.subState&&st.subState["Singer"])st.subState["Singer"].push("");
-  var wrap=document.getElementById("rs-inputs-"+safeId("Singer"));if(!wrap)return;
-  var idx=st.rosterState["Singer"].length-1;
+function addMultiRole(role){
+  if(!canAddMore_(role)){showToast(role+" maksimal "+multiLimit_(role)+" orang.","warn");return;}
+  if(!st.rosterState[role])st.rosterState[role]=[""];
+  st.rosterState[role].push("");
+  if(st.subState&&st.subState[role])st.subState[role].push("");
+  var wrap=document.getElementById("rs-inputs-"+safeId(role));if(!wrap)return;
+  var idx=st.rosterState[role].length-1;
   var btn=wrap.querySelector(".rs-add-btn");
-  var tmp=document.createElement("div");tmp.innerHTML=renderInputRow("Singer",idx,"");
+  var tmp=document.createElement("div");tmp.innerHTML=renderInputRow(role,idx,"");
   wrap.insertBefore(tmp.firstChild,btn);
+  // Hide add button if at limit
+  if(!canAddMore_(role)&&btn)btn.style.display="none";
 }
 
-function removeSinger(idx){
-  if(!st.rosterState["Singer"])return;
-  st.rosterState["Singer"].splice(idx,1);
-  if(!st.rosterState["Singer"].length)st.rosterState["Singer"]=[""];
-  if(st.subState&&st.subState["Singer"]){st.subState["Singer"].splice(idx,1);if(!st.subState["Singer"].length)st.subState["Singer"]=[""];}
+function removeMultiRole(role,idx){
+  if(!st.rosterState[role])return;
+  st.rosterState[role].splice(idx,1);
+  if(!st.rosterState[role].length)st.rosterState[role]=[""];
+  if(st.subState&&st.subState[role]){st.subState[role].splice(idx,1);if(!st.subState[role].length)st.subState[role]=[""];}
   st.dirty=true;updateSaveBtn();
-  var wrap=document.getElementById("rs-inputs-"+safeId("Singer"));if(!wrap)return;
-  var h="";st.rosterState["Singer"].forEach(function(n,ni){h+=renderInputRow("Singer",ni,n);});
-  h+='<button class="rs-add-btn" onclick="addSinger()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Singer</button>';
+  var wrap=document.getElementById("rs-inputs-"+safeId(role));if(!wrap)return;
+  var h="";st.rosterState[role].forEach(function(n,ni){h+=renderInputRow(role,ni,n);});
+  if(canAddMore_(role))h+=addBtnHTML_(role);
   wrap.innerHTML=h;updateWarnBox();
 }
 
-function addSoundman(){
-  if(!st.rosterState["Soundman"])st.rosterState["Soundman"]=[""];
-  st.rosterState["Soundman"].push("");
-  if(st.subState&&st.subState["Soundman"])st.subState["Soundman"].push("");
-  var wrap=document.getElementById("rs-inputs-"+safeId("Soundman"));if(!wrap)return;
-  var idx=st.rosterState["Soundman"].length-1;
-  var btn=wrap.querySelector(".rs-add-btn");
-  var tmp=document.createElement("div");tmp.innerHTML=renderInputRow("Soundman",idx,"");
-  wrap.insertBefore(tmp.firstChild,btn);
+function addBtnHTML_(role){
+  return '<button class="rs-add-btn" onclick="addMultiRole(\''+escQ(role)+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah '+esc(role)+'</button>';
 }
 
-function removeSoundman(idx){
-  if(!st.rosterState["Soundman"])return;
-  st.rosterState["Soundman"].splice(idx,1);
-  if(!st.rosterState["Soundman"].length)st.rosterState["Soundman"]=[""];
-  if(st.subState&&st.subState["Soundman"]){st.subState["Soundman"].splice(idx,1);if(!st.subState["Soundman"].length)st.subState["Soundman"]=[""];}
-  st.dirty=true;updateSaveBtn();
-  var wrap=document.getElementById("rs-inputs-"+safeId("Soundman"));if(!wrap)return;
-  var h="";st.rosterState["Soundman"].forEach(function(n,ni){h+=renderInputRow("Soundman",ni,n);});
-  h+='<button class="rs-add-btn" onclick="addSoundman()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Tambah Soundman</button>';
-  wrap.innerHTML=h;updateWarnBox();
-}
+// Keep old names as aliases so nothing breaks if called elsewhere
+function addSinger(){addMultiRole("Singer");}
+function removeSinger(idx){removeMultiRole("Singer",idx);}
+function addSoundman(){addMultiRole("Soundman");}
+function removeSoundman(idx){removeMultiRole("Soundman",idx);}
 
 function updateWarnBox(){
   var warns=[];
@@ -2093,9 +2166,11 @@ function applyGroup(){
     // sub:someoneFromThePreviousGroup} straight to the sheet.
     st.rosterState[role]=[""];
     st.subState[role]=[""];
-    var names=(group[role]||[]).filter(function(n){
+    var svcName=st.currentSlot&&st.currentSlot.service;
+    var cands=(pool[role]||[]).filter(function(n){return !used[n]&&!isBlocked_(n,slot.date);});
       if(!n)return false;
-      if(isBlocked_(n,slotDate)){skipped.push(n);return false;}   // blocked member → left blank
+      if(isBlocked_(n,slotDate)){skipped.push(n);return false;}
+      if(!isVolEligible_(n,svcName)){skipped.push(n);return false;}
       return true;
     });
     if(names.length){
@@ -2117,6 +2192,23 @@ function applyGroup(){
    tech roles (Speaker, SPV, MD, Sequencer, SD, CM, Soundman) have no group, so
    they're filled from the general pool, least-scheduled first. */
 var GROUP_ROLES_JS = ["WL","Singer","Keys","Guitar","Bass","Drums"];
+// Roles that can have multiple people, and their max count.
+// Singer and Soundman are unlimited (existing behavior).
+// WL, MD, Sequencer are capped at 2.
+var MULTI_ROLES = {
+  "Singer": 99,
+  "Soundman": 99,
+  "WL": 2,
+  "MD": 2,
+  "Sequencer": 2
+};
+
+function isMultiRole_(role) { return MULTI_ROLES.hasOwnProperty(role); }
+function multiLimit_(role) { return MULTI_ROLES[role] || 1; }
+function canAddMore_(role) {
+  var arr = st.rosterState[role] || [""];
+  return arr.length < multiLimit_(role);
+}
 
 function buildGroupRoster(groupName, slot){
   var groups = (st.data && st.data.groups) || {};
@@ -2179,7 +2271,7 @@ function buildPersonRoster(slot){
 
   // Fill rarer roles first (fewer eligible people) so specialists get priority
   // before flexible people are used up elsewhere.
-  var roles=PAW_ROLES.filter(function(r){return!(r==="Speaker"&&st.dept!=="PAW");});
+  var roles=PAW_ROLES.filter(function(r){return !(r==="Speaker"&&st.dept!=="PAW");});
   roles.sort(function(a,b){ return (pool[a]||[]).length-(pool[b]||[]).length; });
 
   roles.forEach(function(role){
@@ -2243,6 +2335,7 @@ function autoAssignAll(){
               b.slot.slots[role]=b.clean[role].map(function(n){return{name:n,sub:""};});
             });
           });
+          invalidateCurrentMonthCache_();
           renderJadwal();
           showToast("Auto assign "+payload.length+" ibadah selesai.","ok");
         } else {
@@ -2740,6 +2833,7 @@ function saveRoster(){
   function ok(res){
     btn.disabled=false;btn.textContent="Simpan Jadwal ✓";
     if(!(res&&res.ok)){showToast((res&&res.msg)||"Gagal menyimpan.","err");return;}
+    invalidateCurrentMonthCache_();
     st.dirty=false;updateSaveBtn();showToast(res.msg,"ok");
     // Mirror the save into local state for every service written, so the jadwal
     // list is correct without a refetch.
@@ -2786,7 +2880,7 @@ function deleteThisService(){
   showModal("Hapus Jadwal","Hapus \""+st.currentSlot.service+"\" pada "+st.currentSlot.date+"?\n\nSemua data roster akan hilang permanen.","Hapus Permanen",function(){
     var slot=st.currentSlot;
     google.script.run
-      .withSuccessHandler(function(){showToast("Jadwal dihapus.","ok");slot.slots={};closeRoster();renderJadwal();})
+      .withSuccessHandler(function(){showToast("Jadwal dihapus.","ok");slot.slots={};invalidateCurrentMonthCache_();closeRoster();renderJadwal();})
       .withFailureHandler(function(e){showToast("Gagal: "+e.message,"err");})
       .deleteService(slot.date,st.origService||slot.service,st.origTime||slot.time);
   });
@@ -2957,9 +3051,21 @@ function saveRingkasanAsImage(){
 
 /* ── KETERSEDIAAN (AVAILABILITY) ── */
 function renderKetersediaan(){
+  var key=st.availYear+"-"+st.availMonth;
+  if(st.availCache[key]){
+    st.availData=st.availCache[key];
+    buildKetersediaanUI(st.availData);
+    prefetchAdjacentAvailMonths_();
+    return;
+  }
   document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat ketersediaan…</div></div>';
   google.script.run
-    .withSuccessHandler(function(data){st.availData=data;buildKetersediaanUI(data);})
+    .withSuccessHandler(function(data){
+      st.availData=data;
+      st.availCache[key]=data;
+      buildKetersediaanUI(data);
+      prefetchAdjacentAvailMonths_();
+    })
     .withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="empty-state">Gagal memuat: '+esc(e.message)+'</div>';})
     .getAvailabilityMatrix(st.availYear,st.availMonth);
 }
@@ -2993,6 +3099,7 @@ function setAvailPub(status){
     .withSuccessHandler(function(res){
       if(res&&res.ok){
         st.availData.availStatus=res.availStatus;
+        st.availCache[st.availYear+"-"+st.availMonth]=st.availData;
         document.getElementById("avail-toggle-wrap").innerHTML=availToggleHtml(res.availStatus==="OPEN");
         showToast(res.availStatus==="OPEN"?"Ketersediaan DIBUKA untuk volunteer.":"Ketersediaan DITUTUP.","ok");
       } else {
@@ -3101,10 +3208,16 @@ var _notes=[];
 var _editingNoteIdx=null;
 
 function renderCatatan(){
+  if(st.notesCache){
+    _notes=st.notesCache;
+    renderCatatanUI();
+    return;
+  }
   document.getElementById("content").innerHTML='<div class="init-loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="big-spin-lbl">Memuat catatan…</div></div>';
   google.script.run
     .withSuccessHandler(function(notes){
       _notes=notes||[];
+      st.notesCache=_notes;
       renderCatatanUI();
     })
     .withFailureHandler(function(e){showToast("Gagal memuat: "+e.message,"err");})
@@ -3189,6 +3302,7 @@ function deleteNote(idx){
     google.script.run
       .withSuccessHandler(function(){
         showToast("Catatan dihapus.","ok");
+        st.notesCache=null;
         renderCatatan();
       })
       .withFailureHandler(function(e){showToast("Gagal: "+e.message,"err");})
@@ -3209,6 +3323,7 @@ function saveNote(){
     .withSuccessHandler(function(){
       showToast("Catatan disimpan.","ok");
       _editingNoteIdx=null;
+      st.notesCache=null;
       renderCatatan();
     })
     .withFailureHandler(function(e){
@@ -3219,7 +3334,7 @@ function saveNote(){
 }
 
 /* ── HELPERS ── */
-function countFilled(slot){var n=0,total=0;PAW_ROLES.forEach(function(r){if(r==="Speaker"&&st.dept!=="PAW")return;total++;if(slot.slots[r]&&slot.slots[r].length>0)n++;});return n;}
+function countFilled(slot){var n=0;PAW_ROLES.forEach(function(r){if(r==="Speaker"&&st.dept!=="PAW")return;if(slot.slots[r]&&slot.slots[r].length>0)n++;});return n;}
 function isoDate(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
 function pad(n){return n<10?"0"+n:String(n);}
 function safeId(k){return k.replace(/[^a-z0-9]/gi,"_");}
