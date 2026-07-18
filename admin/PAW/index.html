@@ -726,6 +726,58 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 }
 .lock-load.off{opacity:0;pointer-events:none}
 .lock-load .big-spin{margin:0 auto 24px}
+
+/* ── DEPT PICKER (matches volunteer gate) ── */
+.dept-pick{position:relative;width:100%}
+.dept-trig{
+  width:100%;
+  min-height:46px;
+  background:
+#12151c;
+  border:1.5px solid rgba(255,255,255,.13);
+  border-radius:13px;
+  padding:7px 11px 7px 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  transition:border-color .2s,box-shadow .2s,background .2s
+}
+.dept-trig.on{box-shadow:0 0 0 3px rgba(232,184,75,.1)}
+.dept-trig:not(.picked).on{border-color:
+#e8b84b}
+.dept-trig.picked{/* bg/color/border set inline by JS */}
+.dept-trig-ph{font-size:14px;color:
+#4a5070;padding:0 2px}
+.dept-trig-chev{margin-left:auto;padding-left:2px;flex-shrink:0;color:
+#8890aa;transition:transform .22s cubic-bezier(.34,1.7,.64,1)}
+.dept-trig.on .dept-trig-chev{transform:rotate(180deg)}
+.dept-menu{
+  position:absolute;
+  top:calc(100% + 5px);
+  left:0;
+  right:0;
+  z-index:120;
+  background:
+#12151c;
+  border:1.5px solid rgba(255,255,255,.13);
+  border-radius:14px;
+  padding:6px;
+  max-height:264px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  display:none;
+  box-shadow:0 14px 44px rgba(0,0,0,.75);
+  animation:popIn .16s cubic-bezier(.34,1.5,.64,1) both;
+  text-align:left
+}
+.dept-opt{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px;cursor:pointer;transition:background .1s}
+.dept-opt:active{background:
+#1a1e28}
+.dept-opt.sel{background:var(--d-bg,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--d-fg,transparent)}
+.dept-opt-check{margin-left:auto;color:var(--d-fg,
+#e8b84b);flex-shrink:0;opacity:0;transition:opacity .12s}
+.dept-opt.sel .dept-opt-check{opacity:1}        
         
 </style>
 </head>
@@ -1423,7 +1475,7 @@ function renderJadwal(){
     var dayFull=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
     h+='<div class="day-group"><div class="day-group-hdr">'+esc(dayFull)+'</div><div class="ev-cards">';
     dg.slots.forEach(function(slot){
-      var filled=countFilled(slot),total=PAW_ROLES.length;
+      var filled=countFilled(slot),total=PAW_ROLES.filter(function(r){return!(r==="Speaker"&&st.dept!=="PAW");}).length;
       var bcls="badge-empty",btxt="Kosong";
       if(filled===total){bcls="badge-full";btxt="Lengkap";}else if(filled>0){bcls="badge-partial";btxt=filled+"/"+total;}
       var ccls="ev-card"+(filled===total?" filled":filled>0?" partial":" empty-tmpl");
@@ -1633,6 +1685,20 @@ function renderRosterPage(){
     if(grp.sub!==undefined)prevSub=grp.sub;
     grp.roles.forEach(function(role){
       var c=C(role);
+      // Non-PAW: Speaker is read-only (injected from PAW data)
+      if(role==="Speaker"&&st.dept!=="PAW"){
+        var spkNames=(st.currentSlot&&st.currentSlot.slots&&st.currentSlot.slots["Speaker"])||[];
+        var spkDisplay=spkNames.length
+          ? spkNames.map(function(s){
+              var nm=s.name||s, sub=s.sub||"";
+              return sub ? esc(nm)+' <span style="color:#4ade80">→ '+esc(sub)+'</span>' : esc(nm);
+            }).join(', ')
+          : '<span style="color:#4a5070">Belum diisi oleh PAW</span>';
+        h+='<div class="rs-role-row" style="background:'+dimBg(c.bg)+'">'+
+          '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(role)+'</div>'+
+          '<div class="rs-inputs" style="padding:10px 12px;font-size:14px;color:#f0f0f5;border-left:1px solid rgba(255,255,255,.08)">'+spkDisplay+'</div></div>';
+        return;
+      }
       h+='<div class="rs-role-row" style="background:'+dimBg(c.bg)+'">'+
         '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(role)+'</div>'+
         '<div class="rs-inputs" id="rs-inputs-'+safeId(role)+'">';
@@ -2113,7 +2179,7 @@ function buildPersonRoster(slot){
 
   // Fill rarer roles first (fewer eligible people) so specialists get priority
   // before flexible people are used up elsewhere.
-  var roles=PAW_ROLES.slice(); // PAW_ROLES holds THIS dept's roles after onDataLoaded
+  var roles=PAW_ROLES.filter(function(r){return!(r==="Speaker"&&st.dept!=="PAW");});
   roles.sort(function(a,b){ return (pool[a]||[]).length-(pool[b]||[]).length; });
 
   roles.forEach(function(role){
@@ -2657,6 +2723,8 @@ function saveRoster(){
   var btn=document.getElementById("rp-save");btn.disabled=true;btn.textContent="Menyimpan…";
   var clean={};
   PAW_ROLES.forEach(function(role){
+    // Non-PAW: never write Speaker (it's PAW's data)
+    if(role==="Speaker"&&st.dept!=="PAW")return;
     var arr=[];
     (st.rosterState[role]||[]).forEach(function(name,i){
       name=(name||"").trim(); if(!name)return;
@@ -3151,7 +3219,7 @@ function saveNote(){
 }
 
 /* ── HELPERS ── */
-function countFilled(slot){var n=0;PAW_ROLES.forEach(function(r){if(slot.slots[r]&&slot.slots[r].length>0)n++;});return n;}
+function countFilled(slot){var n=0,total=0;PAW_ROLES.forEach(function(r){if(r==="Speaker"&&st.dept!=="PAW")return;total++;if(slot.slots[r]&&slot.slots[r].length>0)n++;});return n;}
 function isoDate(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
 function pad(n){return n<10?"0"+n:String(n);}
 function safeId(k){return k.replace(/[^a-z0-9]/gi,"_");}
