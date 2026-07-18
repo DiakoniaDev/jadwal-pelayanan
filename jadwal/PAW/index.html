@@ -1304,16 +1304,31 @@ function contentInstant_(){
 function enterApp(){
   var v=st.gateSelectedVol;
   if(!v)return;
-  var g=document.getElementById("gate");
   hideDeptMenu();hideGateSug();
 
-// Armed BEFORE loginAsVol: a prefetched schedule resolves synchronously, so
-  // setDeptHeader would otherwise fire while revealBusy_ is still false.
+  // If schedule is already cached (prefetched on name pick), go instantly.
+  // Otherwise keep the gate up with a spinner on Masuk until data arrives.
+  if(st.schedCache[v.name]){
+    liftGateAndLogin_(v);
+  } else {
+    var btn=document.getElementById("gate-enter-btn");
+    if(btn){btn.disabled=true;btn.textContent="Memuat…";}
+    fetchSchedule_(v.name,function(data){
+      if(btn){btn.disabled=false;btn.textContent="Masuk";}
+      liftGateAndLogin_(v);
+    },function(e){
+      if(btn){btn.disabled=false;btn.textContent="Masuk";}
+      alert("Gagal memuat jadwal: "+(e&&e.message||e));
+    });
+  }
+}
+
+function liftGateAndLogin_(v){
+  var g=document.getElementById("gate");
   revealBusy_=true;
   document.body.classList.add("app-in");
   loginAsVol(v);
   contentInstant_();
-
   if(g){
     g.classList.add("closing");
     setTimeout(function(){
