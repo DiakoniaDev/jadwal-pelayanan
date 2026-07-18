@@ -1075,6 +1075,15 @@ markGateReady_("config");
   console.warn("getConfig failed",e);
   markGateReady_("config");
 }).getConfig();
+google.script.run.withSuccessHandler(function(list){
+  st.allMusicians=list||[];
+  markGateReady_("vols");
+}).withFailureHandler(function(e){
+  console.warn("getAllVolunteers failed",e);
+  st.allMusicians=[];
+  markGateReady_("vols");
+}).getAllVolunteers();
+        
 
 /* ── GATE BOOT ──
    Memory now only PREFILLS the gate (dept + name). The person still has to tap
