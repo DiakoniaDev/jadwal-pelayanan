@@ -892,6 +892,16 @@ Object.defineProperty(google.script, 'run', { get: function(){ return new GasRun
 
 var SPLASH_MIN_MS = 1400;
 var splashStart = Date.now();
+
+// Early prefetch: if we have a saved name, start loading their schedule
+// NOW — don't wait for getConfig/getAllVolunteers. By the time the splash
+// clears and the user taps Masuk, the data is already cached.
+(function earlyPrefetch_(){
+  var savedName=null;
+  try{ savedName=localStorage.getItem(APP_CONFIG.storagePrefix+"volName"); }catch(e){}
+  if(savedName) prefetchSchedule_(savedName);
+})();        
+        
 var splashGone = false;
 // Driven by markGateReady_() now, not window.load — the splash IS the data loader,
 // so it clears exactly once and hands straight over to the gate form.
@@ -901,15 +911,10 @@ function hideSplash(){
   var el = document.getElementById('native-splash');
   var wait = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStart));
   setTimeout(function(){
-    // If autoEnter_ already ran, the gate is hidden and splash is being
-    // dismissed from there — don't pop the gate or double-dismiss.
-    var g=document.getElementById("gate");
-    if(g&&g.style.display!=="none") popGateInner_();
+    popGateInner_();
     if(!el) return;
-    if(!el.classList.contains("off")){
-      el.classList.add('off');
-      setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 600);
-    }
+    el.classList.add('off');
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 600);
   }, wait);
 }
 
@@ -1097,57 +1102,14 @@ function prefillGateFromMemory_(){
   if(!match)return;
   if(!match.dept||(st.departments||[]).indexOf(match.dept)===-1)return;
 
-  // Returning user — try to skip the gate entirely.
-  // If the schedule is already cached (prefetch won the race), go straight in.
-  // Otherwise, wait for it — the splash stays up as the loader.
-  st.gateSelectedVol=match;
-  st.gateDept=match.dept;
-
-  if(st.schedCache[savedName]){
-    autoEnter_(match);
-  } else {
-    // Schedule still in flight or not started — fire and wait
-    fetchSchedule_(savedName,function(){
-      autoEnter_(match);
-    },function(){
-      // Failed — fall back to showing the gate so they can retry
-      showGateFallback_(match);
-    });
-  }
-}
-
-function autoEnter_(v){
-  // Skip the gate — go straight from splash to app
-  var g=document.getElementById("gate");
-  if(g)g.style.display="none";
-  revealBusy_=false;
-  document.body.classList.add("app-in");
-  loginAsVol(v);
-  contentInstant_();
-  // No gate lift animation needed — splash is still covering, it fades out on its own
-  var splash=document.getElementById("native-splash");
-  if(splash){
-    splash.classList.add("off");
-    setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},600);
-  }
-  revealDone_();
-}
-
-function showGateFallback_(match){
-  // Network failed — show the gate normally with prefilled fields
   setGateDept_(match.dept);
   document.getElementById("gate-name-inp").value=match.name;
+  st.gateSelectedVol=match;
   hideGateSug();
   document.getElementById("gate-enter-btn").disabled=false;
+  prefetchSchedule_(match.name);
 }
 
-google.script.run.withSuccessHandler(function(list){
-  st.allMusicians=list||[];
-  markGateReady_("vols");
-}).withFailureHandler(function(e){
-  console.warn("getAllVolunteers failed",e);
-  markGateReady_("vols");
-}).getAllVolunteers();
 
 function openDr(){document.getElementById("dr").classList.add("on");document.getElementById("ov").classList.add("on");}
 function closeDr(){document.getElementById("dr").classList.remove("on");document.getElementById("ov").classList.remove("on");}
