@@ -901,10 +901,15 @@ function hideSplash(){
   var el = document.getElementById('native-splash');
   var wait = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStart));
   setTimeout(function(){
-    popGateInner_();
+    // If autoEnter_ already ran, the gate is hidden and splash is being
+    // dismissed from there — don't pop the gate or double-dismiss.
+    var g=document.getElementById("gate");
+    if(g&&g.style.display!=="none") popGateInner_();
     if(!el) return;
-    el.classList.add('off');
-    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 600);
+    if(!el.classList.contains("off")){
+      el.classList.add('off');
+      setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 600);
+    }
   }, wait);
 }
 
@@ -1090,15 +1095,50 @@ function prefillGateFromMemory_(){
   if(!savedName)return;
   var match=(st.allMusicians||[]).find(function(m){return m.name===savedName;});
   if(!match)return;
+  if(!match.dept||(st.departments||[]).indexOf(match.dept)===-1)return;
 
- if(!match.dept||(st.departments||[]).indexOf(match.dept)===-1)return;  // dept gone from config → pick fresh
-
-  setGateDept_(match.dept);   // no focus() in here, so the keyboard stays down
-  document.getElementById("gate-name-inp").value=match.name;
+  // Returning user — try to skip the gate entirely.
+  // If the schedule is already cached (prefetch won the race), go straight in.
+  // Otherwise, wait for it — the splash stays up as the loader.
   st.gateSelectedVol=match;
+  st.gateDept=match.dept;
+
+  if(st.schedCache[savedName]){
+    autoEnter_(match);
+  } else {
+    // Schedule still in flight or not started — fire and wait
+    fetchSchedule_(savedName,function(){
+      autoEnter_(match);
+    },function(){
+      // Failed — fall back to showing the gate so they can retry
+      showGateFallback_(match);
+    });
+  }
+}
+
+function autoEnter_(v){
+  // Skip the gate — go straight from splash to app
+  var g=document.getElementById("gate");
+  if(g)g.style.display="none";
+  revealBusy_=false;
+  document.body.classList.add("app-in");
+  loginAsVol(v);
+  contentInstant_();
+  // No gate lift animation needed — splash is still covering, it fades out on its own
+  var splash=document.getElementById("native-splash");
+  if(splash){
+    splash.classList.add("off");
+    setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},600);
+  }
+  revealDone_();
+}
+
+function showGateFallback_(match){
+  // Network failed — show the gate normally with prefilled fields
+  setGateDept_(match.dept);
+  document.getElementById("gate-name-inp").value=match.name;
   hideGateSug();
   document.getElementById("gate-enter-btn").disabled=false;
-  prefetchSchedule_(match.name);   // returning person → warm it before they even tap
 }
 
 google.script.run.withSuccessHandler(function(list){
