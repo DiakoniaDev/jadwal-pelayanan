@@ -424,6 +424,12 @@ body:not(.app-in) .home{animation:none}   /* first paint sits behind the gate �
 .note-body{font-size:14px;color:#8890aa;line-height:1.7}
 .note-by{font-size:11px;color:#4a5070;margin-top:8px}
 
+/* ── NOTE PDF EMBED ── */
+.note-pdf-wrap{border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#1a1e28;margin-top:12px}
+.note-pdf-wrap iframe{width:100%;height:380px;border:none;display:block}
+.note-open-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#e8b84b;text-decoration:none;margin-top:8px}
+.note-open-link:active{opacity:.7}        
+
 /* ── MASUKAN ──────────────── */
 .fb-wrap{padding-top:6px;animation:fbPopIn .55s cubic-bezier(.22,1.08,.36,1) both}
 @keyframes fbPopIn{
@@ -724,6 +730,8 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .toast.ok{border-color:rgba(74,222,128,.3);color:#4ade80}
 .toast.err{border-color:rgba(248,113,113,.3);color:#f87171}
 .toast.warn{border-color:rgba(232,184,75,.3);color:#e8b84b}
+
+        
         
 </style>
 </head>
@@ -2453,7 +2461,27 @@ function saveRingkasanAsImage(){
 /* ── CATATAN ── */
 function paintNotes_(notes){
   if(!notes||!notes.length){document.getElementById("content").innerHTML='<div class="empty" style="padding-top:20px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="empty-msg">Belum ada catatan dari admin.</div></div>';contentReady_();return;}
-  var h='<div class="notes-list">';notes.forEach(function(n){h+='<div class="note-card">'+(n.tanggal?'<div class="note-date">'+esc(n.tanggal)+(n.oleh?' · '+esc(n.oleh):'')+'</div>':'')+(n.judul?'<div class="note-title">'+esc(n.judul)+'</div>':'')+(n.isi?'<div class="note-body">'+esc(n.isi).replace(/\n/g,'<br>')+'</div>':'')+'</div>';});h+='</div>';
+  var h='<div class="notes-list">';
+  notes.forEach(function(n){
+    h+='<div class="note-card">';
+    if(n.tanggal)h+='<div class="note-date">'+esc(n.tanggal)+(n.oleh?' · '+esc(n.oleh):'')+'</div>';
+    if(n.judul)h+='<div class="note-title">'+esc(n.judul)+'</div>';
+    if(n.isi)h+='<div class="note-body">'+esc(n.isi).replace(/\n/g,'<br>')+'</div>';
+    if(n.previewUrl){
+      h+='<div class="note-pdf-wrap"><iframe src="'+encodeURI(n.previewUrl)+'" loading="lazy" allow="autoplay"></iframe></div>';
+      h+='<a class="note-open-link" href="'+encodeURI(n.link||n.previewUrl)+'" target="_blank" rel="noopener">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+        '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/>'+
+        '<line x1="10" y1="14" x2="21" y2="3"/></svg>Buka PDF di tab baru</a>';
+    } else if(n.link){
+      h+='<a class="note-open-link" href="'+encodeURI(n.link)+'" target="_blank" rel="noopener">'+
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+        '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/>'+
+        '<line x1="10" y1="14" x2="21" y2="3"/></svg>Buka link</a>';
+    }
+    h+='</div>';
+  });
+  h+='</div>';
   document.getElementById("content").innerHTML=h;
   contentReady_();
 }
