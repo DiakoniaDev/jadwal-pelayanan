@@ -1784,7 +1784,7 @@ function fillRoster(elId,data,myName){
   var h="",prevSeg=null,prevSub=null,segOpen=false;
   // Show PAW speaker for non-PAW depts (read-only, injected by backend)
   var dept=st.vol&&st.vol.dept;
-  if(dept&&dept!=="PAW"&&slots["Speaker"]&&slots["Speaker"].length){
+  if(dept&&dept!=="PAW"&&dept!=="EK"&&slots["Speaker"]&&slots["Speaker"].length){
     var spC=C("Speaker");
     h+='<div class="seg-block" style="'+SS[1]+'">';
     h+='<div class="role-row" style="background:'+rowTint("Speaker")+'"><div class="r-lbl" style="color:'+spC.fg+'">Speaker</div><div class="r-names">';
