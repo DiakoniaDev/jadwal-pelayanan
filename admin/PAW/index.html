@@ -3117,7 +3117,7 @@ function renderRingkasan(){
   });
   h+='</tr>';
 
-  if(PAW_ROLES.indexOf("Speaker")!==-1){
+  if(RING_ROLES.indexOf("Speaker")!==-1){
     var spC=C("Speaker"),spTint=dimBg(spC.bg,0.3);
     h+='<tr><td class="role-col" style="color:'+spC.fg+';background:'+spC.bg+'">'+esc(roleLabel("Speaker"))+'</td>';
     satSun.forEach(function(s){
