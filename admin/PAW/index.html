@@ -986,6 +986,7 @@ var API_KEY_REQUIRED = ['verifyKey','getAdminData','saveServiceRoster','saveMany
 // is UX, not the security boundary.
 var ADMIN_KEY  = sessionStorage.getItem('gms_admin_key')  || "";
 var ADMIN_DEPT = sessionStorage.getItem('gms_admin_dept') || "";
+var _adminDataCache={};   // dept-year-month → getAdminData response (Jadwal/Ringkasan/Masukan all read from this)
 function setAdminKey(k){ ADMIN_KEY = k || ""; if (k) sessionStorage.setItem('gms_admin_key', k); else sessionStorage.removeItem('gms_admin_key'); }
 function setAdminDept(d){ ADMIN_DEPT = d || ""; if (d) sessionStorage.setItem('gms_admin_dept', d); else sessionStorage.removeItem('gms_admin_dept'); }
 
@@ -1360,7 +1361,7 @@ function C(r){return RC[(r||"").toLowerCase()]||RC.soundman;}
 function roleLabel(r){var map={"Soundman":"Sound","Sequencer":"Seq"};return map[r]||r;}
 function serviceLabel(s){return s;}
 
-var _adminDataCache={};   // dept-year-month → getAdminData response (Jadwal/Ringkasan/Masukan all read from this)
+
 
 var st={tab:"jadwal",dept:"",year:0,month:0,availYear:0,availMonth:0,availData:null,data:null,slots:[],currentSlot:null,rosterState:{},subState:{},origService:"",origTime:"",origSpecial:false,loaded:false,dirty:false,songs:null,songDirty:false,dressUrl:null,dressDirty:false,selfieItems:[],selfieFilter:"pending",selfieGroup:"",dressList:[],songGroup:"",songDate:"",songGroupList:[],songCards:[],songIdx:null,songCardsKey:"",notesCache:null,availCache:{}};
 var AVAIL_SVC_TAB = "all";   // "all","Voltage","AOG","Umum"        
@@ -1983,9 +1984,9 @@ function filterDd(role,idx,query){
       var warnCls=cnt>=6?" warn-item":"";
       var selCls=m.name===currentVal?" selected":"";
       var cntTxt=cnt>=6?"⚠️ "+cnt+"×":cnt>3?cnt+"×":"";
-      h+='<div class="rs-dd-item'+selCls+'" onmousedown="pickGrpDd(\''+escQ(g)+'\')">'+
-        '<span>'+esc(groupLabel(g))+'</span>'+
-        '<span class="rs-dd-cnt" style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(preview)+'</span>'+
+      h+='<div class="rs-dd-item'+warnCls+selCls+'" onmousedown="pickDd(\''+escQ(role)+'\','+idx+',\''+escQ(m.name)+'\')">'+
+        '<span>'+esc(m.name)+'</span>'+
+        '<span class="rs-dd-cnt">'+esc(cntTxt)+'</span>'+
       '</div>';
     });
   }
