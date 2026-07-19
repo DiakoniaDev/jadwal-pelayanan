@@ -1946,6 +1946,7 @@ function renderInputRow(role,idx,sel){
       '<span class="rs-dd-cnt">'+esc(cntTxt)+'</span>'+
     '</div>';
   });
+  h+='<div class="rs-dd-item" style="border-top:1px solid rgba(255,255,255,.08);color:#8890aa;font-size:12px" onmousedown="switchToManual(\''+escQ(role)+'\','+idx+')"><span>✏️ Ketik nama manual…</span></div>';      
   h+='</div></div>';
   if(isMultiRole_(role)&&(st.rosterState[role]||[]).length>1)h+='<button class="rs-remove-btn" onclick="removeMultiRole(\''+escQ(role)+'\','+idx+')">×</button>';
   h+='</div>';
@@ -1953,6 +1954,18 @@ function renderInputRow(role,idx,sel){
   if(_sub)h+='<div class="rs-sub-hint" id="rs-subhint-'+sr+'-'+idx+'">&#8618; digantikan oleh <b>'+esc(_sub)+'</b> <button type="button" onclick="clearSub(\''+escQ(role)+'\','+idx+')" title="Batalkan pergantian" style="margin-left:6px;border:none;background:none;color:#ff6b7a;font-size:13px;cursor:pointer;padding:0 4px">&times;</button></div>';
   return h;
 }
+
+function switchToManual(role,idx){
+  closeAllDd();
+  var sr=safeId(role);
+  var wrap=document.getElementById('rs-dd-'+sr+'-'+idx);
+  if(!wrap)return;
+  wrap.innerHTML='<input class="rs-text-inp" type="text" placeholder="Ketik nama…" value="'+esc(st.rosterState[role][idx]||'')+'" oninput="onSelectChange(\''+escQ(role)+'\','+idx+',this.value)" autofocus>';
+  var inp=wrap.querySelector('input');
+  if(inp)setTimeout(function(){inp.focus();},50);
+  st.dirty=true;updateSaveBtn();
+}
+        
 function dimBg(bg,factor){
   var m=bg.match(/rgba\(([\d.]+),([\d.]+),([\d.]+),([\d.]+)\)/);
   if(!m)return bg;
