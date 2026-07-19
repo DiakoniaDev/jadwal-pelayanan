@@ -704,7 +704,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tdc-custom-tag{font-size:10px;font-weight:700;text-transform:uppercase;color:#c084fc;background:rgba(192,132,252,.15);padding:2px 7px;border-radius:20px;margin-left:7px}
 /* selfie queue */
 .tsq-groups{display:flex;gap:5px;background:#12151c;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:5px;margin-bottom:10px}
-.tsq-gbtn{flex:1;padding:12px 0;border:none;border-radius:10px;background:none;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#8890aa;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .18s}
+.tsq-gbtn{flex:1;padding:9px 4px;border:none;border-radius:10px;background:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;color:#8890aa;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;transition:background .18s}
 .tsq-gbtn.on{background:rgba(232,184,75,.15);color:#e8b84b;box-shadow:inset 0 0 0 1px rgba(232,184,75,.35)}
 .tsq-gdot{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:20px;background:#e8b84b;color:#0a0c10;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700}
 .tsq-filter{display:flex;gap:6px;margin-bottom:16px}
@@ -1046,7 +1046,7 @@ var st={
   isWL:false,isQC:false,
   toolSongCards:[],toolSongIdx:null,toolSongs:null,toolSongDirty:false,toolSongDate:"",toolSongGroup:"",toolSongCardsKey:"",
   toolDressList:[],toolDressDepts:[],toolDressDept:"",
-  toolSelfieItems:[],toolSelfieFilter:"pending",toolSelfieGroup:"",
+  toolSelfieItems:[],toolSelfieFilter:"pending",toolSelfieGroup:"",toolSelfieDept:"",,
   rolesByDept:{},structureByDept:{},cardTabsByDept:{},
   departments:[],deptFilter:"",
   gateDept:"",gateSelectedVol:null,gateSugList:[],gateDebounce:null
@@ -2644,6 +2644,12 @@ function prefetchToolSelfie(){
   callApi('getSelfieQueue',[st.vol.name]).then(function(res){
     st.toolSelfieItems=(res&&res.items)||[];st._toolSelfieLoaded=true;
   }).catch(function(){});
+  // Also warm dressDepts for the dept tabs if not already loaded
+  if(!st.toolDressDepts||!st.toolDressDepts.length){
+    callApi('getDresscodeList',[st.viewYear,st.viewMonth,"PAW"]).then(function(res){
+      st.toolDressDepts=(res&&res.depts)||["PAW","Usher","EK"];
+    }).catch(function(){st.toolDressDepts=["PAW","Usher","EK"];});
+  }
 }
         
 /* ── WL SONGLIST TOOL ───────────────────────────────────────── */
@@ -2927,13 +2933,36 @@ function toolSelfieGroups(){
 }
 
 function toolSelfieShown(){
-  var g=st.toolSelfieGroup,s=st.toolSelfieFilter||"pending";
-  return(st.toolSelfieItems||[]).filter(function(it){return toolSelfieGroupOf(it)===g&&it.status===s;});
+  var g=st.toolSelfieGroup,s=st.toolSelfieFilter||"pending",d=st.toolSelfieDept;
+  return(st.toolSelfieItems||[]).filter(function(it){
+    return toolSelfieGroupOf(it)===g&&it.status===s&&(!d||selfieVolDept_(it.name)===d);
+  });
+}
+
+function selfieVolDept_(name){
+  var lo=String(name||"").toLowerCase().trim();
+  for(var i=0;i<(st.allMusicians||[]).length;i++){
+    if((st.allMusicians[i].name||"").toLowerCase().trim()===lo)return st.allMusicians[i].dept||"";
+  }
+  return "";
 }
 
 function buildToolSelfieQueue(){
-  var items=st.toolSelfieItems||[],groups=toolSelfieGroups();
+  var allItems=st.toolSelfieItems||[];
+  var dressDepts=st.toolDressDepts||["PAW","Usher","EK"];
+  if(!st.toolSelfieDept||dressDepts.indexOf(st.toolSelfieDept)===-1)st.toolSelfieDept=dressDepts[0];
+  var items=allItems.filter(function(it){return selfieVolDept_(it.name)===st.toolSelfieDept;});
+  var groups=toolSelfieGroupsFiltered_(items);
   var h='<div class="tool-wrap"><div class="tool-title">Approval Selfie</div>';
+
+  // Dept tabs
+  h+='<div class="tdc-dept-tabs">';
+  dressDepts.forEach(function(dp){
+    var m=deptMeta(dp),on=dp===st.toolSelfieDept;
+    h+='<button class="tdc-dept-tab'+(on?' on':'')+'" style="'+(on?'background:'+m.bg+';color:'+m.fg:'color:#8890aa')+'" onclick="setToolSelfieDept(\''+escQ(dp)+'\')">'+
+      '<span class="dept-pill-icon">'+m.icon+'</span><span class="dept-pill-name">'+esc(dp)+'</span></button>';
+  });
+  h+='</div>';
   if(!groups.length){h+='<div class="tsq-empty">Belum ada selfie yang diupload.</div></div>';document.getElementById("content").innerHTML=h;return;}
   if(groups.indexOf(st.toolSelfieGroup)===-1)st.toolSelfieGroup=groups[0];
   var g=st.toolSelfieGroup;
@@ -2977,6 +3006,16 @@ function buildToolSelfieQueue(){
 }
 
 function setToolSelfieGroup(g){st.toolSelfieGroup=g;buildToolSelfieQueue();}
+
+function toolSelfieGroupsFiltered_(items){
+  var seen={},out=[];
+  TOOL_SELFIE_GROUP_ORDER.forEach(function(g){if(items.some(function(it){return toolSelfieGroupOf(it)===g;})){seen[g]=true;out.push(g);}});
+  items.forEach(function(it){var g=toolSelfieGroupOf(it);if(g&&!seen[g]){seen[g]=true;out.push(g);}});
+  return out;
+}
+
+function setToolSelfieDept(d){st.toolSelfieDept=d;st.toolSelfieGroup="";buildToolSelfieQueue();}        
+        
 function setToolSelfieFilter(f){st.toolSelfieFilter=f;buildToolSelfieQueue();}
 
 function decideToolSelfie(idx,decision){
