@@ -1207,6 +1207,7 @@ function toggleDeptMenu(e){
   if(!menu||!trig)return;
   var open=menu.style.display!=="block";
   menu.style.display=open?"grid":"none";
+  menu.style.gridTemplateColumns="repeat(3,1fr)";
   trig.classList.toggle("on",open);
   if(open)hideGateSug();
 }
