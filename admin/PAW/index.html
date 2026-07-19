@@ -1511,7 +1511,7 @@ function generateSlots(year,month,existing){
   var d=new Date(year,month,1);
   while(d.getMonth()===month){
     var dow=d.getDay(),tpls=null;
-    if(dow===6)tpls=SAT_TEMPLATES;else if(dow===0)tpls=SUN_TEMPLATES;
+    if(dow===6&&ADMIN_DEPT!=="EK")tpls=SAT_TEMPLATES;else if(dow===0)tpls=SUN_TEMPLATES;
     if(tpls){tpls.forEach(function(t){var ds=isoDate(d),dn=dow===0?"Minggu":"Sabtu",key=ds+"|"+t.service+"|"+t.time;if(!used[key]){used[key]=true;var ex=null;for(var i=0;i<existing.length;i++){if(existing[i].date===ds&&existing[i].service===t.service&&existing[i].time===t.time){ex=existing[i];break;}}slots.push({date:ds,day:dn,time:t.time,service:t.service,slots:ex?ex.slots:{},key:key,isCustom:false,isSpecial:ex?!!ex.isSpecial:false});}});}
     d.setDate(d.getDate()+1);
   }
