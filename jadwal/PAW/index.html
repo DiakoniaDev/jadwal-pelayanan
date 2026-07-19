@@ -1354,10 +1354,14 @@ function liftGateAndLogin_(v){
   var g=document.getElementById("gate");
   revealBusy_=true;
   document.body.classList.add("app-in");
+
+  // Blank the content NOW, before the gate even starts lifting — otherwise
+  // the stale "Welcome Home!" screen is visible underneath as the gate rises.
+  var c=document.getElementById("content");
+  if(c){c.innerHTML="";c.classList.remove("ready");}
+
   if(g){
     g.classList.add("closing");
-    // Render content ~350ms in — the gate bottom has cleared by then,
-    // so vol-card/tabs/event-card animations play while the user can see them.
     setTimeout(function(){
       loginAsVol(v);
       contentInstant_();
