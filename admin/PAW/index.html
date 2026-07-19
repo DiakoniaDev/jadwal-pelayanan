@@ -352,11 +352,11 @@ table.ring-tbl{border-collapse:collapse;min-width:100%;font-size:12px}
 .avail-legend i{width:20px;height:11px;border-radius:20px;display:inline-block}
 .avail-role-block{margin-bottom:22px}
 .avail-role-hdr{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:8px;letter-spacing:-.01em}
-.avail-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid rgba(255,255,255,.08)}
+.avail-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid rgba(255,255,255,.08);transform:translateZ(0)}
 table.avail-tbl{border-collapse:collapse;font-size:12px}
 .avail-tbl th,.avail-tbl td{border:1px solid rgba(255,255,255,.07);padding:6px 8px;text-align:center;vertical-align:middle;white-space:nowrap}
 .avail-tbl th{background:#1a1e28;font-weight:700;font-size:11px;color:#8890aa;line-height:1.25}
-.avail-name-col{position:sticky;left:0;z-index:2;background:#12151c;text-align:left;font-weight:600;color:#f0f0f5;min-width:118px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.avail-name-col{position:sticky;left:0;z-index:2;background:#12151c;text-align:left;font-weight:600;color:#f0f0f5;min-width:118px;max-width:150px;overflow:hidden;text-overflow:ellipsis;box-shadow:3px 0 6px -3px rgba(0,0,0,.5)}
 .avail-tbl th.avail-name-col{color:#8890aa;font-weight:700}
 .avail-date-col{min-width:44px}
 .avail-cell{padding:5px 6px}
@@ -366,7 +366,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 
 /* ── KETERSEDIAAN SERVICE TABS ── */
 .avail-svc-tabs{display:flex;gap:5px;background:#12151c;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:5px;margin-bottom:14px}
-.avail-svc-tab{flex:1;padding:11px 0;border:none;border-radius:10px;background:none;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:.02em;color:#8890aa;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .18s,color .18s}
+.avail-svc-tab{flex:1;padding:9px 4px;border:none;border-radius:10px;background:none;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;letter-spacing:0;color:#8890aa;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;transition:background .18s,color .18s}
 .avail-svc-tab.on{background:rgba(232,184,75,.15);color:#e8b84b;box-shadow:inset 0 0 0 1px rgba(232,184,75,.35)}
 .avail-svc-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:20px;background:rgba(255,255,255,.1);color:#8890aa;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700}
 .avail-svc-tab.on .avail-svc-cnt{background:#e8b84b;color:#0a0c10}        
@@ -554,7 +554,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
 .jadwal-search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#4a5070;font-size:18px;cursor:pointer;display:none;padding:0;line-height:1}
 
 /* ── GROUP ASSIGN ── */
-.grp-assign-wrap{margin:0 0 12px;display:flex;gap:8px;align-items:center}
+.grp-assign-wrap{margin:14px 0 12px;display:flex;gap:8px;align-items:center}
 .grp-assign-select{flex:1;background:#1a1e28;border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:#f0f0f5;outline:none;-webkit-appearance:none;cursor:pointer;transition:border-color .2s}
 .grp-assign-select:focus{border-color:#e8b84b}
 .grp-assign-btn{padding:9px 14px;border-radius:10px;border:none;background:#e8b84b;color:#0a0c10;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -905,6 +905,9 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
         </div>
         <button class="grp-assign-btn" onclick="applyGroup()">Terapkan</button>
       </div>
+      <button class="grp-assign-btn" id="rp-auto-single-btn" style="display:none;width:100%;margin-top:14px;padding:11px" onclick="autoAssignSlot()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Auto Assign Ibadah Ini
+      </button>
     </div>
     <div class="rp-body" id="rp-body"></div>
     <div class="rp-save-bar">
@@ -1258,12 +1261,24 @@ function populateLoginDepts(){
   });
 }
 
-// On load: always show the lock. A stored session only PREFILLS it — the admin
-// still taps Masuk. No more silent auto-entry on refresh.
+// On load: always show the lock — the admin still taps Masuk every time.
+// A stored dept+key only PREFILLS the form AND fires a silent background
+// prefetch of this month's data, so by the time they actually tap Masuk the
+// request often has nothing left to do but read from cache.
 (function initLock(){
   showLock();
   populateLoginDepts();
   setTimeout(hideLockLoader_, 8000);   // a dead API must never trap them behind the loader
+  if(ADMIN_KEY && ADMIN_DEPT){
+    var now=new Date();
+    var py=now.getFullYear(), pm=now.getMonth();
+    var pkey=ADMIN_DEPT+"-"+py+"-"+pm;
+    if(!_adminDataCache[pkey]){
+      callApi('getAdminData',[py,pm]).then(function(data){
+        if(data && !data.error) _adminDataCache[pkey]=data;
+      }).catch(function(){});
+    }
+  }
 })();
 
 function GasRun(){ this._s=null; this._f=null; }
@@ -1968,9 +1983,9 @@ function filterDd(role,idx,query){
       var warnCls=cnt>=6?" warn-item":"";
       var selCls=m.name===currentVal?" selected":"";
       var cntTxt=cnt>=6?"⚠️ "+cnt+"×":cnt>3?cnt+"×":"";
-      h+='<div class="rs-dd-item'+warnCls+selCls+'" onmousedown="pickDd(\''+escQ(role)+'\','+idx+',\''+escQ(m.name)+'\')">'+
-        '<span>'+esc(m.name)+'</span>'+
-        '<span class="rs-dd-cnt">'+esc(cntTxt)+'</span>'+
+      h+='<div class="rs-dd-item'+selCls+'" onmousedown="pickGrpDd(\''+escQ(g)+'\')">'+
+        '<span>'+esc(groupLabel(g))+'</span>'+
+        '<span class="rs-dd-cnt" style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(preview)+'</span>'+
       '</div>';
     });
   }
@@ -2107,13 +2122,18 @@ function updateSaveBtn(){
 
 function renderGroupDropdown(){
   var wrap=document.getElementById("grp-assign-wrap");
-  if(!wrap)return;
+  var autoBtn=document.getElementById("rp-auto-single-btn");
   var groups=st.data&&st.data.groups?st.data.groups:{};
   var groupNames=Object.keys(groups);
-  if(!groupNames.length){wrap.style.display="none";return;}
-  wrap.style.display="flex";
-  var inp=document.getElementById("grp-select");
-  if(inp){inp.value="";inp._selectedGroup="";}
+  if(groupNames.length){
+    if(wrap)wrap.style.display="flex";
+    if(autoBtn)autoBtn.style.display="none";
+    var inp=document.getElementById("grp-select");
+    if(inp){inp.value="";inp._selectedGroup="";}
+  } else {
+    if(wrap)wrap.style.display="none";
+    if(autoBtn)autoBtn.style.display="block";
+  }
 }
 
 function openGrpDd(){
@@ -2184,7 +2204,21 @@ function onGrpDocClick(e){
     document.addEventListener("click",onGrpDocClick,{once:true,capture:true});
   }
 }
-
+        
+function autoAssignSlot(){
+  var slot=st.currentSlot; if(!slot)return;
+  var res=buildPersonRoster(slot);
+  PAW_ROLES.forEach(function(role){
+    if(role==="Speaker"&&st.dept!=="PAW")return;
+    var names=(res[role]||[]).filter(function(x){return x;});
+    st.rosterState[role]=names.length?names:[""];
+    st.subState[role]=names.length?names.map(function(){return "";}):[""];
+  });
+  st.dirty=true;updateSaveBtn();
+  renderRosterPage();
+  showToast("Auto assign diterapkan untuk ibadah ini.","ok");
+}
+        
 function applyGroup(){
   var sel=document.getElementById("grp-select");
   var groupName=sel&&sel._selectedGroup||"";
@@ -3007,6 +3041,8 @@ function renderRingkasan(){
     h+='</tr>';
   }
 
+  var GROUP_ROW_DEPTS=["PAW","C-PRO","Usher"];
+  if(GROUP_ROW_DEPTS.indexOf(st.dept)!==-1){
   h+='<tr><th class="role-col" style="color:#8890aa;font-size:10px;letter-spacing:.06em;text-transform:uppercase">Group</th>';
   satSun.forEach(function(s){
     var bandRoles=GROUP_ROLES_JS;
@@ -3026,6 +3062,7 @@ function renderRingkasan(){
     h+='<th style="'+grpBg+'font-size:11px;font-weight:800;'+col+'">'+label+'</th>';
   });
   h+='</tr>';
+  }
 
   RING_ROLES.forEach(function(role){
     if(role==="Speaker")return;
