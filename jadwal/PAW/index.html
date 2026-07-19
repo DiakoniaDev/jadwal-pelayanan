@@ -843,7 +843,7 @@ var API_PARAM_MAP = {
   getDresscode: ['date','service'],
   getMySelfie: ['name','date','service'],
   uploadSelfie: ['name','date','service','imageData','mimeType'],
-  getSonglistCards: ['year','month'],
+  getSonglistCards: ['year','month','dept'],
   saveSonglist: ['date','service','songsJson','callerName','dept'],
   getDresscodeList: ['year','month','forDept'],
   saveDresscode: ['date','service','pdfUrl','forDept','callerName'],
@@ -2636,7 +2636,7 @@ function prefetchToolSonglist(){
   if(st.toolSongCardsKey===mkey)return;
   google.script.run.withSuccessHandler(function(res){
     st.toolSongCards=(res&&res.cards)||[];st.toolSongCardsKey=mkey;
-  }).withFailureHandler(function(){}).getSonglistCards(y,m);
+  }).withFailureHandler(function(){}).getSonglistCards(y,m,st.vol&&st.vol.dept);
 }
 
 function prefetchToolDresscode(){
@@ -2687,7 +2687,7 @@ function renderToolSonglist(){
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat songlist…</div></div>';
   google.script.run.withSuccessHandler(function(res){
     st.toolSongCards=(res&&res.cards)||[];st.toolSongCardsKey=mkey;buildToolSonglistPage();
-  }).withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message)+'</div>';}).getSonglistCards(y,m);
+  }).withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message)+'</div>';}).getSonglistCards(y,m,st.vol.dept);
 }
 
 function chToolSongMonth(dir){
