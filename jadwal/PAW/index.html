@@ -371,7 +371,7 @@ body:not(.app-in) .home{animation:none}   /* first paint sits behind the gate �
 }
 .roster-fadein{transform-origin:top;animation:rosterFadeIn .3s cubic-bezier(.34,1.56,.64,1) both}
 .roster-fadein{animation:rosterFadeIn 1.2s cubic-bezier(.16,1,.3,1) both}
-.roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#1a1e28;display:flex;flex-direction:column;gap:7px}
+.roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#12151c;display:flex;flex-direction:column;gap:7px}
 .roster-spin{display:flex;align-items:center;gap:8px;font-size:13px;color:#8890aa;padding:4px}
 
 /* ── GROUP LABEL ──────────── */
@@ -649,7 +649,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 /* songlist cards */
 .tsl-card{display:flex;align-items:center;gap:13px;background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:15px;padding:14px 15px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;animation:fadeUp .28s cubic-bezier(.22,1,.36,1) both}
 .tsl-card:active{background:#1a1e28}
-.tsl-card.has{border-color:rgba(74,222,128,.3)}
+.tsl-card.has{border-color:rgba(74,222,128,.55);border-width:2px}
 .tsl-icon{width:42px;height:42px;border-radius:12px;background:rgba(232,184,75,.13);color:#e8b84b;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .tsl-info{flex:1;min-width:0}
 .tsl-grp{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#f0f0f5}
@@ -657,7 +657,8 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tsl-card.has .tsl-count{color:#4ade80}
 .tsl-arrow{color:#4a5070;flex-shrink:0}
 .tsl-daygroup{margin-bottom:20px}
-.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#e8b84b;margin-top:30px;margin-bottom:10px}
+.tsl-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:36px;margin-bottom:14px}
+.tsl-daygroup:first-child .tsl-daylbl{margin-top:6px}
 /* songlist editor (slide-in) */
 .tool-editor{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;z-index:100;background:#0d0f14;transform:translateX(100%);visibility:hidden;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s linear .32s;display:flex;flex-direction:column;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
 .tool-editor.on{transform:translateX(0);visibility:visible;transition:transform .32s cubic-bezier(.22,1,.36,1),visibility 0s}
@@ -687,9 +688,10 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tdc-dept-tab.on{box-shadow:inset 0 0 0 1px currentColor}
 .tdc-week{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#e8b84b;background:rgba(232,184,75,.15);padding:2px 7px;border-radius:20px;margin-left:7px}
 .tdc-daygroup{margin-bottom:20px}
-.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:30px;margin-bottom:10px}
+.tdc-daylbl{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#e8b84b;margin-top:36px;margin-bottom:14px}
+.tdc-daygroup:first-child .tdc-daylbl{margin-top:6px}        
 .tdc-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;margin-bottom:10px}
-.tdc-card.has{border-color:rgba(74,222,128,.3)}
+.tdc-card.has{border-color:rgba(74,222,128,.55);border-width:2px}
 .tdc-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .tdc-svc{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#f0f0f5}
 .tdc-stat{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
@@ -713,7 +715,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .tsq-card{background:#12151c;border:1.5px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;margin-bottom:14px}
 .tsq-card.approved{border-color:rgba(74,222,128,.35)}
 .tsq-card.rejected{border-color:rgba(248,113,113,.35)}
-.tsq-img{width:100%;max-height:340px;object-fit:contain;background:#000;display:block;cursor:zoom-in}
+.tsq-img{width:100%;max-height:280px;object-fit:cover;background:#000;display:block;cursor:zoom-in;border-radius:14px 14px 0 0}
 .tsq-body{padding:13px 15px}
 .tsq-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#f0f0f5}
 .tsq-meta{font-size:12px;color:#8890aa;margin-top:2px}
@@ -913,7 +915,13 @@ var splashStart = Date.now();
     st.schedCache[savedName]=d;
     try{localStorage.setItem(APP_CONFIG.storagePrefix+"schedCache",JSON.stringify(d));}catch(e){}
   }).withFailureHandler(function(){}).getVolunteerSchedule(savedName);
-})();    
+})();   
+(function earlyConfigPrefetch_(){
+  // Warm the two gate-blocking calls — if they finish before the user taps
+  // Masuk, markGateReady_ fires instantly and the splash clears faster.
+  callApi('getConfig',[]).then(function(){}).catch(function(){});
+  callApi('getAllVolunteers',[]).then(function(){}).catch(function(){});
+})();        
         
 var splashGone = false;
 // Driven by markGateReady_() now, not window.load — the splash IS the data loader,
@@ -1020,7 +1028,7 @@ var DEPT_META = {
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'},
 "Prayer":   {fg:"#f472b6", bg:"rgba(244,114,182,.16)",
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M9 3c0 4-1 6-4 8 3 1 4 3 4 5"/><path d="M15 3c0 4 1 6 4 8-3 1-4 3-4 5"/><path d="M9 5.5c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg>'},
- "C-PRO":    {fg:"#a855f7", bg:"rgba(168,85,247,.16)",
+ "C-PRO":    {fg:"#7c3aed", bg:"rgba(124,58,237,.16)",
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>'},
 "FLC":      {fg:"#84cc16", bg:"rgba(132,204,22,.16)",
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'},
@@ -1072,7 +1080,7 @@ var st={
   availOpenMonths:[],availSelYear:0,availSelMonth:0,availBlocked:{},availDirty:false,
   isWL:false,isQC:false,
   toolSongCards:[],toolSongIdx:null,toolSongs:null,toolSongDirty:false,toolSongDate:"",toolSongGroup:"",toolSongCardsKey:"",
-  toolDressList:[],toolDressDepts:[],toolDressDept:"",
+  toolDressList:[],toolDressDepts:[],toolDressDept:"",toolDressDeadline:"",
   toolSelfieItems:[],toolSelfieFilter:"pending",toolSelfieGroup:"",toolSelfieDept:"",
   rolesByDept:{},structureByDept:{},cardTabsByDept:{},
   departments:[],deptFilter:"",
@@ -1869,10 +1877,14 @@ function renderKetersediaan(){
   if(st._availPrefetched && st.availOpenMonths){
     if(!st.availOpenMonths.length){
       content.innerHTML='<div class="empty" style="padding-top:40px"><div class="empty-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div><div class="empty-msg">Belum ada bulan yang dibuka untuk ketersediaan.</div></div>';
+      contentReady_();
       return;
     }
-    if(st.availData){buildAvailUI();return;}
+    if(st.availData){buildKetersediaanUI();contentReady_();return;}
   }
+  // Show loading spinner while fetching
+  content.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat ketersediaan…</div></div>';
+  contentReady_();
   content.innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat ketersediaan…</div></div>';
   google.script.run
     .withSuccessHandler(function(months){
@@ -1904,10 +1916,8 @@ function loadMyAvailability(){
 }
 
 function buildKetersediaanUI(){
-  contentReady_();
   var y=st.availSelYear,m=st.availSelMonth;
   var h='<div class="av-wrap">';
-  h+='<div class="av-vol-line">Ketersediaan untuk <b>'+esc(st.vol.name)+'</b></div>';
   if(st.availOpenMonths.length>1){
     h+='<div class="av-month-pills">';
     st.availOpenMonths.forEach(function(mo){
@@ -1923,6 +1933,7 @@ function buildKetersediaanUI(){
   h+='<button class="av-save-btn'+(st.availDirty?' dirty':'')+'" id="av-save" onclick="saveAvail()"'+(st.availDirty?'':' disabled')+'>Simpan Ketersediaan ✓</button>';
   h+='</div>';
   document.getElementById("content").innerHTML=h;
+  contentReady_();
 }
 
 function buildAvailCal(year,mon){
@@ -2157,7 +2168,8 @@ function seedExtras_(extras){
   if(!st.vol||!extras)return;
   Object.keys(extras).forEach(function(k){
     var x=extras[k]||{};
-    if(x.song)st.songCache["song|"+k]=x.song;
+    var sDept=st.vol&&st.vol.dept||"PAW";
+    if(x.song)st.songCache["song|"+sDept+"|"+k]=x.song;
     if(x.dress)st.dressCache["dress|"+k]=x.dress;
     if(x.selfie)st.selfieCache["selfie|"+st.vol.name+"|"+k]=x.selfie;
   });
@@ -2230,6 +2242,9 @@ function renderSonglistPane_(kid,res){
 
 function loadCardSonglist(kid,ev){
   if(!ev)return;
+  var dept=st.vol&&st.vol.dept||"PAW";
+  var cached=st.songCache["song|"+dept+"|"+ev.date+"|"+svcOf_(ev)];
+  if(cached){renderSonglistPane_(kid,cached);return;}
   fetchSonglist_(ev,function(res){renderSonglistPane_(kid,res);},function(e){
     var pane=document.getElementById("pane-song-"+kid);
     if(pane){pane.innerHTML='<div class="song-empty">Gagal memuat: '+esc(e.message)+'</div>';growRoster(kid);}
@@ -2460,7 +2475,7 @@ function buildRingkasanUI(data){
   h+='<tr><th class="role-col"></th>';
   dateOrder.forEach(function(ds){
     var d=new Date(ds+"T00:00:00");
-    var dstr=HARI_S[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
+    var dstr=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
     var isSpec=!!specialDates[ds];
     var style=isSpec?'background:rgba(192,132,252,.15);color:#c084fc':'';
     h+='<th class="date-hdr" colspan="'+dateGroups[ds].slots.length+'" style="'+style+'">'+esc(dstr)+'</th>';
@@ -2697,8 +2712,7 @@ function chToolSongMonth(dir){
 
 function buildToolSonglistPage(){
   var cards=st.toolSongCards||[];
-  var h='<div class="tool-wrap"><div class="tool-title">Atur Songlist</div>'+
-    '<div class="tool-sub">Ketuk kartu untuk mengisi lagu. Satu songlist berlaku untuk semua ibadah dalam grup yang sama.</div>'+
+  var h='<div class="tool-wrap">'+
     '<div class="tool-month-nav">'+
       '<button class="mon-btn" onclick="chToolSongMonth(-1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>'+
       '<div class="tool-month-lbl">'+BLN_L[st.viewMonth]+' '+st.viewYear+'</div>'+
@@ -2800,12 +2814,14 @@ function dressGroupOf_(svc){
   return s;
 }
 
-function generateDressSlotsVol(year,month,saved){
+function generateDressSlotsVol(year,month,saved,dept){
   var map={},order=[];
   var d=new Date(year,month,1);
   while(d.getMonth()===month){
     var dow=d.getDay(),tpls=(dow===6)?SAT_TEMPLATES:(dow===0)?SUN_TEMPLATES:null;
     if(tpls){
+      // EK only has Sunday services — skip Saturday templates
+      if(dow===6 && dept==="EK"){d.setDate(d.getDate()+1);continue;}
       var ds=year+"-"+pad(month+1)+"-"+pad(d.getDate());
       var seen={};
       tpls.forEach(function(t){
@@ -2851,7 +2867,7 @@ function renderToolDresscode(){
   callApi('getDresscodeList',[st.viewYear,st.viewMonth,st.toolDressDept]).then(function(res){
     st.toolDressDepts=(res&&res.depts)||["PAW","Usher"];
     if(st.toolDressDepts.indexOf(st.toolDressDept)===-1)st.toolDressDept=st.toolDressDepts[0];
-    st.toolDressList=generateDressSlotsVol(st.viewYear,st.viewMonth,(res&&res.items)||[]);
+    st.toolDressList=generateDressSlotsVol(st.viewYear,st.viewMonth,(res&&res.items)||[],st.toolDressDept);
     st._toolDressByKey[st.viewYear+"-"+st.viewMonth+"|"+st.toolDressDept]={list:st.toolDressList,depts:st.toolDressDepts};
     buildToolDresscodePage();
   }).catch(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message||e)+'</div>';});
@@ -2875,6 +2891,13 @@ function buildToolDresscodePage(){
       '<span class="dept-pill-icon">'+m.icon+'</span><span class="dept-pill-name">'+esc(dp)+'</span></button>';
   });
   h+='</div>';
+  h+='<div style="background:#12151c;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f59e0b;margin-bottom:4px">Deadline Upload</div>'+
+      '<div style="font-size:13px;color:#8890aa" id="tdc-deadline-display">'+(st.toolDressDeadline||'Belum diatur')+'</div>'+
+    '</div>'+
+    '<input type="date" class="tdc-url-inp" id="tdc-deadline-inp" value="'+esc(st.toolDressDeadline||'')+'" style="width:auto;margin:0;flex-shrink:0" onchange="setToolDressDeadline(this.value)">'+
+  '</div>';
   if(!list.length){h+='<div class="tsq-empty">Tidak ada Sabtu/Minggu bulan ini.</div>';}
   else{
     var byDate={},order=[];
@@ -2902,7 +2925,20 @@ function buildToolDresscodePage(){
 }
 
 function onToolDressInput(i){var btn=document.getElementById("tdc-save-"+i);if(btn){btn.classList.add("dirty");btn.disabled=false;}}
-
+function setToolDressDeadline(val){
+  st.toolDressDeadline=val;
+  var el=document.getElementById("tdc-deadline-display");
+  if(el){
+    if(val){
+      var d=new Date(val+"T00:00:00");
+      el.textContent=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()]+" "+d.getFullYear();
+    } else {
+      el.textContent="Belum diatur";
+    }
+  }
+  showToast("Deadline diatur.","ok");
+}
+        
 function saveToolDresscode(i){
   var it=(st.toolDressList||[])[i];if(!it)return;
   var inp=document.getElementById("tdc-url-"+i),url=inp?inp.value.trim():"";
@@ -2980,7 +3016,7 @@ function buildToolSelfieQueue(){
   if(!st.toolSelfieDept||dressDepts.indexOf(st.toolSelfieDept)===-1)st.toolSelfieDept=dressDepts[0];
   var items=allItems.filter(function(it){return selfieVolDept_(it.name)===st.toolSelfieDept;});
   var groups=toolSelfieGroupsFiltered_(items);
-  var h='<div class="tool-wrap"><div class="tool-title">Approval Selfie</div>';
+  var h='<div class="tool-wrap">';
 
   // Dept tabs
   h+='<div class="tdc-dept-tabs">';
@@ -3293,7 +3329,37 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+/* ── BACK BUTTON GUARD ── */
+var _navGuardArmed=false;
+function armNavGuard(){
+  try{history.pushState({gmsGuard:1},"");_navGuardArmed=true;}catch(e){}
+}
 
+function onNavBack(){
+  armNavGuard();
+  // Peel overlays first
+  if(document.getElementById("tsl-editor")&&document.getElementById("tsl-editor").classList.contains("on")){closeToolSongEditor();return;}
+  if(document.getElementById("dr").classList.contains("on")){closeDr();return;}
+  var ov=document.getElementById("tool-modal-ov");
+  if(ov&&ov.style.opacity==="1"){closeToolModal();return;}
+
+  showToolModal("Keluar Aplikasi","Yakin keluar dari aplikasi?","Keluar",function(){
+    _navGuardArmed=false;
+    window.removeEventListener("popstate",onPopGuard);
+    if(history.length>2)history.go(-2);
+    else{try{window.close();}catch(e){}}
+    // If still here after 600ms, re-arm
+    setTimeout(function(){
+      window.addEventListener("popstate",onPopGuard);
+      armNavGuard();
+      showToast("Tidak bisa menutup otomatis — tutup lewat tombol sistem.","warn");
+    },600);
+  });
+}
+
+function onPopGuard(){if(_navGuardArmed)onNavBack();}
+window.addEventListener("popstate",onPopGuard);
+armNavGuard();
 </script>
 
 <div class="toast" id="toast"></div>
