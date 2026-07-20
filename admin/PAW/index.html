@@ -910,7 +910,7 @@ table.avail-tbl{border-collapse:collapse;font-size:12px}
     <div class="rp-body" id="rp-body"></div>
     <div class="rp-save-bar">
       <label class="rp-copy-row" id="rp-copy-row" style="display:none">
-        <input type="checkbox" class="chk-box" id="rp-copy-all">
+        <input type="checkbox" class="chk-box" id="rp-copy-all" onchange="onCopyToggle_()">
         <span id="rp-copy-lbl">Terapkan juga ke ibadah lain</span>
       </label>
       <button class="rp-save-btn" id="rp-save" onclick="saveRoster()">Simpan Jadwal ✓</button>
@@ -1612,7 +1612,13 @@ function setPubStatus(status){
   if(!st.data)return;
   var cur=st.data.monthStatus||"OPEN";
   if(cur===status)return;
-  st.data.monthStatus=status;renderPubToggle();          // optimistic
+  // Instant visual feedback — disable buttons and show spinner
+  var btns=document.querySelectorAll(".pub-btn");
+  btns.forEach(function(b){b.disabled=true;b.style.opacity=".5";});
+  st.data.monthStatus=status;renderPubToggle();
+  // Re-disable after re-render since renderPubToggle rebuilds the buttons
+  var btns2=document.querySelectorAll(".pub-btn");
+  btns2.forEach(function(b){b.disabled=true;b.style.opacity=".5";});
   google.script.run
     .withSuccessHandler(function(res){
       if(res&&res.ok){
@@ -1628,6 +1634,7 @@ function setPubStatus(status){
       showToast("Error: "+(e&&e.message||e),"err");
     })
     .setMonthStatus(st.year,st.month,status);
+}
 }
 
 /* ── ATUR JADWAL ── */
@@ -1884,12 +1891,12 @@ function renderRosterPage(){
             }).join(', ')
           : '<span style="color:#4a5070">Belum diisi oleh PAW</span>';
         h+='<div class="rs-role-row" style="background:'+dimBg(c.bg)+'">'+
-          '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(role)+'</div>'+
+          '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(roleLabel(role))+'</div>'+
           '<div class="rs-inputs" style="padding:10px 12px;font-size:14px;color:#f0f0f5;border-left:1px solid rgba(255,255,255,.08)">'+spkDisplay+'</div></div>';
         return;
       }
       h+='<div class="rs-role-row" style="background:'+dimBg(c.bg)+'">'+
-        '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(role)+'</div>'+
+        '<div class="rs-lbl" style="color:'+c.fg+'">'+esc(roleLabel(role))+'</div>'+
         '<div class="rs-inputs" id="rs-inputs-'+safeId(role)+'">';
       var names=st.rosterState[role]||[""];
       names.forEach(function(name,ni){h+=renderInputRow(role,ni,name);});
@@ -1960,10 +1967,22 @@ function switchToManual(role,idx){
   var sr=safeId(role);
   var wrap=document.getElementById('rs-dd-'+sr+'-'+idx);
   if(!wrap)return;
-  wrap.innerHTML='<input class="rs-text-inp" type="text" placeholder="Ketik nama…" value="'+esc(st.rosterState[role][idx]||'')+'" oninput="onSelectChange(\''+escQ(role)+'\','+idx+',this.value)" autofocus>';
+  wrap.innerHTML='<div style="display:flex;gap:6px;align-items:center">'+
+    '<input class="rs-text-inp" type="text" placeholder="Ketik nama…" value="'+esc(st.rosterState[role][idx]||'')+'" oninput="onSelectChange(\''+escQ(role)+'\','+idx+',this.value)" style="flex:1">'+
+    '<button class="rs-remove-btn" style="width:auto;height:auto;padding:6px 8px;font-size:11px;border-color:rgba(232,184,75,.4);color:#e8b84b" onclick="backToDropdown(\''+escQ(role)+'\','+idx+')" title="Kembali ke dropdown">↩</button>'+
+  '</div>';
   var inp=wrap.querySelector('input');
   if(inp)setTimeout(function(){inp.focus();},50);
-  st.dirty=true;updateSaveBtn();
+}
+
+function backToDropdown(role,idx){
+  var wrap=document.getElementById("rs-inputs-"+safeId(role));
+  if(!wrap)return;
+  var h="";
+  (st.rosterState[role]||[""]).forEach(function(n,ni){h+=renderInputRow(role,ni,n);});
+  if(isMultiRole_(role)&&canAddMore_(role))h+=addBtnHTML_(role);
+  wrap.innerHTML=h;
+  updateWarnBox();
 }
         
 function dimBg(bg,factor){
@@ -2006,6 +2025,11 @@ function onSelectChange(role,idx,val){
   if(el)el.classList.toggle("warn-select",isOverLimit(val));
   updateWarnBox();
 }
+
+function onCopyToggle_(){
+  var box=document.getElementById("rp-copy-all");
+  if(box&&box.checked){st.dirty=true;updateSaveBtn();}
+}        
 
 var _ddRole=null,_ddIdx=null;
 
@@ -2088,12 +2112,11 @@ function clearSubHint_(role,idx){
 function pickDd(role,idx,name){
   if(!st.rosterState[role])st.rosterState[role]=[""];
   if(!st.subState[role])st.subState[role]=[];
+  var oldVal=(st.rosterState[role][idx]||"").trim();
+  var newVal=(name||"").trim();
+  if(oldVal===newVal){closeAllDd();return;}
   var subChanged=applyPick_(role,idx,name);
   st.dirty=true;updateSaveBtn();
-  closeAllDd();
-  renderRosterPage();
-  updateWarnBox();
-}
 
 // True unless the current month is explicitly CLOSE.
 function isMonthOpen(){ return !(st.data && st.data.monthStatus==="CLOSE"); }
@@ -3251,8 +3274,13 @@ function setAvailPub(status){
   if(!st.availData)return;
   var cur=st.availData.availStatus||"CLOSE";
   if(cur===status)return;
+  // Instant feedback
+  var btns=document.querySelectorAll("#avail-toggle-wrap .pub-btn");
+  btns.forEach(function(b){b.disabled=true;b.style.opacity=".5";});
   st.availData.availStatus=status;
-  document.getElementById("avail-toggle-wrap").innerHTML=availToggleHtml(status==="OPEN"); // optimistic
+  document.getElementById("avail-toggle-wrap").innerHTML=availToggleHtml(status==="OPEN");
+  var btns2=document.querySelectorAll("#avail-toggle-wrap .pub-btn");
+  btns2.forEach(function(b){b.disabled=true;b.style.opacity=".5";});
   google.script.run
     .withSuccessHandler(function(res){
       if(res&&res.ok){
