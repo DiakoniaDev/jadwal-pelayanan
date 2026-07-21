@@ -739,7 +739,10 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 .toast.warn{border-color:rgba(232,184,75,.3);color:#e8b84b}
 
 .offline-bar{position:fixed;top:0;left:0;right:0;z-index:9998;background:#f59e0b;color:#0a0c10;text-align:center;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:6px 16px;transform:translateY(-100%);transition:transform .3s ease;padding-top:calc(6px + env(safe-area-inset-top,0px))}
-.offline-bar.on{transform:translateY(0)}        
+.offline-bar.on{transform:translateY(0)}
+body.offline .hdr{top:calc(29px + env(safe-area-inset-top,0px))}
+body.offline .lock{padding-top:calc(env(safe-area-inset-top,0px) + var(--gate-top) + 29px)}
+body.offline .dr{padding-top:calc(env(safe-area-inset-top,0px) + 29px)}    
         
         
 </style>
@@ -3425,8 +3428,8 @@ armNavGuard();
 function updateOnlineStatus_(){
   var bar=document.getElementById("offline-bar");
   if(!bar)return;
-  if(navigator.onLine){bar.classList.remove("on");}
-  else{bar.classList.add("on");}
+  if(navigator.onLine){bar.classList.remove("on");document.body.classList.remove("offline");}
+  else{bar.classList.add("on");document.body.classList.add("offline");}
 }
 window.addEventListener("online",updateOnlineStatus_);
 window.addEventListener("offline",updateOnlineStatus_);
