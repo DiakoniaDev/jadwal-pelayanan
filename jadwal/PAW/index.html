@@ -782,6 +782,11 @@ body.offline .dr{padding-top:calc(env(safe-area-inset-top,0px) + 29px)}
 .dir-wa:active{background:rgba(37,211,102,.25)}
 .dir-wa svg{width:20px;height:20px;color:#25d366}
 .dir-empty{text-align:center;padding:48px 0;color:#8890aa;font-size:14px}
+
+.btn-loading{opacity:.5;pointer-events:none;position:relative}
+.btn-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:-2px;margin-right:6px}
+.btn-spin-dark{border-color:rgba(10,12,16,.2);border-top-color:#0a0c10}
+        
         
 </style>
 </head>
@@ -2314,7 +2319,8 @@ function renderSonglistPane_(kid,res){
         editing:false
       };
     }
-    if(st._songEdit[kid].editing){renderSongEditPane_(kid);growRoster(kid);return;}
+    if(st._songEdit[kid].editing&&st._songEdit[kid].dirty){renderSongEditPane_(kid);growRoster(kid);return;}
+    st._songEdit[kid].editing=false;
   }
 
   // ── READ-ONLY VIEW (everyone + WL default) ──
@@ -2901,9 +2907,9 @@ function renderMasukan(){
 }
         
 function kirimMasukan(){
-  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){alert("Pesan tidak boleh kosong.");return;}
-  var btn=document.getElementById("fb-btn");btn.disabled=true;btn.textContent="Mengirim…";
-  google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico">🙏</div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(st.vol&&st.vol.dept,n,p);
+  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){showToolModal("Tidak Bisa Kirim","Pesan tidak boleh kosong. Tulis pesan terlebih dahulu.","OK",function(){});return;}
+  var btn=document.getElementById("fb-btn");btnLoading(btn,"Mengirim…",true);
+  google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico"></div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(st.vol&&st.vol.dept,n,p);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3072,7 +3078,7 @@ function saveToolSonglist(){
 /* ── DIRECTORY ── */
 var _dirCache=null;
 var _dirDept="";
-var _volCacheTimestamp=0;
+var _volCacheTimestamp=Date.now();
 var VOL_CACHE_STALE_MS=60000;
 
 function renderDirektori(){
@@ -3617,7 +3623,9 @@ var HAPTIC_SEL=[
   ".sub-btn",".mon-btn",".menu-btn",".sched-tab",".card-tab",
   ".dept-trig",".dept-opt",".av-cell.svc",".av-month-pill",
   ".vol-card",".ecard-top",".ecard-notif",".selfie-btn",
-  ".sug-item",".dr-item",".cal-cell.has-event"
+  ".sug-item",".dr-item",".cal-cell.has-event",".song-edit-btn",".song-back-btn",".tsl-add-btn",".tsl-save-btn",".tsl-remove",
+  ".dp-save",".sq-btn",".sq-approve",".sq-reject",
+  ".tdc-save-btn",".selfie-btn",".sub-btn",
 ].join(",");
 
 function buzz_(ms){
@@ -3735,6 +3743,20 @@ function onNavBack(){
 function onPopGuard(){if(_navGuardArmed)onNavBack();}
 window.addEventListener("popstate",onPopGuard);
 armNavGuard();
+function btnLoading(btn,msg,dark){
+  if(!btn)return;
+  btn._origText=btn.innerHTML;
+  btn.innerHTML='<span class="btn-spin'+(dark?' btn-spin-dark':'')+'"></span>'+(msg||'');
+  btn.classList.add("btn-loading");
+  btn.disabled=true;
+}
+function btnReset(btn,text){
+  if(!btn)return;
+  btn.innerHTML=text||btn._origText||'';
+  btn.classList.remove("btn-loading");
+  btn.disabled=false;
+  btn.style.opacity='';
+}
         
 /* ── OFFLINE DETECTION ── */
 function updateOnlineStatus_(){
