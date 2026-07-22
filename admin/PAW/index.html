@@ -1026,7 +1026,9 @@ document.addEventListener("click",function(e){
 
 (function(){var sx=0;document.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;},{passive:true});document.addEventListener("touchend",function(e){var dx=e.changedTouches[0].clientX-sx;if(dx<-50&&document.getElementById("dr").classList.contains("on"))closeDr();},{passive:true});})();
         
-var _adminDataCache={};   // dept-year-month → getAdminData response (Jadwal/Ringkasan/Masukan all read from this)
+var _adminDataCache={};
+var _cacheTimestamps={};
+var CACHE_STALE_MS=60000;   // 60 seconds
 function setAdminKey(k){ ADMIN_KEY = k || ""; if (k) sessionStorage.setItem('gms_admin_key', k); else sessionStorage.removeItem('gms_admin_key'); }
 function setAdminDept(d){ ADMIN_DEPT = d || ""; if (d) sessionStorage.setItem('gms_admin_dept', d); else sessionStorage.removeItem('gms_admin_dept'); }
 
@@ -1091,8 +1093,8 @@ var DEPT_META = {
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>'},
  "Usher":    {fg:"#4ec9a0", bg:"rgba(78,201,160,.16)",
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'},
- "Prayer":   {fg:"#f472b6", bg:"rgba(244,114,182,.16)",
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-4 5-6 8-6 11a6 6 0 0 0 12 0c0-3-2-6-6-11z"/><path d="M12 18v4"/></svg>'},
+ "Prayer":   {fg:"#e04590", bg:"rgba(224,69,144,.16)",
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l-3 7h6z"/><path d="M9 9L7 16l5 5 5-5-2-7"/><path d="M12 9v12"/></svg>'},
  "EK":       {fg:"#facc15", bg:"rgba(250,204,21,.16)",
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'},
  "FLC":      {fg:"#84cc16", bg:"rgba(132,204,22,.16)",
@@ -1153,6 +1155,7 @@ function hideDeptMenu(){
 function pickLockDept(d){ hideDeptMenu(); setLockDept_(d); }
 
 function setLockDept_(d){
+  var prevDept=LOCK_DEPT;
   LOCK_DEPT=d;
   var body=document.getElementById("lock-dept-body");
   var trig=document.getElementById("lock-dept-trig");
@@ -1171,6 +1174,13 @@ function setLockDept_(d){
     var o=document.getElementById("dopt-"+safeId(x));
     if(o)o.classList.toggle("sel",x===d);
   });
+  // Clear password when switching dept
+  if(prevDept && prevDept!==d){
+    var inp=document.getElementById("lock-input");
+    if(inp)inp.value="";
+    var err=document.getElementById("lock-err");
+    if(err)err.textContent="";
+  }
 }
 
 // Bare icon+name without the wrapper span (caller supplies the shape)
@@ -1450,6 +1460,7 @@ function loadData(){
   google.script.run
     .withSuccessHandler(function(data){
       _adminDataCache[key]=data;
+      _cacheTimestamps[key]=Date.now();
       onDataLoaded(data);
       prefetchAdjacentJadwalMonths_();
     })
@@ -1471,6 +1482,7 @@ function loadDataThenReveal_(){
   google.script.run
     .withSuccessHandler(function(data){
       _adminDataCache[key]=data;
+      _cacheTimestamps[key]=Date.now();
       onDataLoaded(data);
       applyDeptLabels();
       setLockBusy(false);
@@ -1589,6 +1601,7 @@ function navTo(tab){
   NAV_TABS.forEach(function(t){var el=document.getElementById("dn-"+t);if(el)el.classList.toggle("on",t===tab);});
   var h=document.getElementById("hdr-l1");if(h)h.textContent=NAV_LABELS[tab]||tab;
   renderTab();
+  silentRefresh_();
 }
 
 function renderTab(){
@@ -3081,6 +3094,7 @@ function saveRoster(){
         });
       });
     });
+    st.dirty=false;_rosterSnapshot=JSON.stringify({r:st.rosterState,s:st.subState});
     closeRoster();renderJadwal();scrollToSavedCard(slot.key);
   }
   function fail(e){btn.disabled=false;btn.textContent="Simpan Jadwal ✓";showToast("Error: "+(e&&e.message||e),"err");}
@@ -3723,7 +3737,20 @@ function togglePass(){
   if(eye){eye.innerHTML=willShow?_EYE_HIDE:_EYE_SHOW;eye.setAttribute('aria-label',willShow?'Sembunyikan password':'Tampilkan password');}
   try{inp.focus();}catch(e){}
 }
-
+function silentRefresh_(){
+  var key=ADMIN_DEPT+"-"+st.year+"-"+st.month;
+  var ts=_cacheTimestamps[key]||0;
+  if(Date.now()-ts<CACHE_STALE_MS)return;   // still fresh
+  _cacheTimestamps[key]=Date.now();
+  callApi('getAdminData',[st.year,st.month]).then(function(data){
+    if(!data||data.error)return;
+    _adminDataCache[key]=data;
+    // Only re-render if user is still on the same month
+    if(ADMIN_DEPT+"-"+st.year+"-"+st.month===key){
+      onDataLoaded(data);
+    }
+  }).catch(function(){});
+}
 function showPubOverlay(msg){var el=document.getElementById("pub-overlay");var lbl=document.getElementById("pub-overlay-lbl");if(lbl)lbl.textContent=msg||"Mengubah status…";if(el)el.classList.add("on");}
 function hidePubOverlay(){var el=document.getElementById("pub-overlay");if(el)el.classList.remove("on");}        
 </script>
