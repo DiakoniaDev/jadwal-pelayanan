@@ -361,13 +361,13 @@ body:not(.app-in) .home{animation:none}   /* first paint sits behind the gate �
         
         
 /* ── ROSTER PANEL ─────────── */
-.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height .3s linear}
-
+.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height .45s cubic-bezier(.22,.9,.36,1)}
 @keyframes rosterFadeIn{
   0%  { opacity:0; transform:translateY(-8px); }
+  60% { opacity:1; }
   100%{ opacity:1; transform:translateY(0); }
 }
-.roster-fadein{transform-origin:top;animation:rosterFadeIn .3s linear both}
+.roster-fadein{transform-origin:top;animation:rosterFadeIn .4s cubic-bezier(.22,.9,.36,1) both}
 .roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#12151c;display:flex;flex-direction:column;gap:7px}
 .roster-spin{display:flex;align-items:center;gap:8px;font-size:13px;color:#8890aa;padding:4px}
 
@@ -509,6 +509,7 @@ table.ring-tbl{border-collapse:collapse;font-size:12px;table-layout:fixed}
 @keyframes paneOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(var(--pane-dx,-18px))}}
 .song-list{display:flex;flex-direction:column;gap:8px;padding:12px 12px 14px}
 .song-list,.song-edit-wrap{animation:songPaneIn .35s ease both}
+.song-list .song-row:first-child{margin-top:8px}
 @keyframes songPaneIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .song-row{display:flex;align-items:center;gap:10px;background:#1a1e28;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:10px 12px}
 .song-info{flex:1;min-width:0}
@@ -2568,7 +2569,8 @@ function selfieBoxHTML(kid,ev){
 
 var SELFIE_STATUS_LABEL={
   none:'Belum upload', pending:'\u23f3 Menunggu approval',
-  approved:'\u2705 Disetujui', rejected:'\u274c Ditolak, upload ulang'
+  approved:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Disetujui',
+  rejected:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ditolak, upload ulang'
 };
 
 function renderSelfieStatus(kid,status){
@@ -3396,7 +3398,7 @@ function buildToolSelfieQueue(){
       var d=new Date(it.date+"T00:00:00");
       var dstr=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
       var week=Math.ceil(d.getDate()/7);
-      var badge='<span class="tsq-badge '+it.status+'">'+(it.status==="pending"?"⏳ Menunggu":it.status==="approved"?"✅ Disetujui":"❌ Ditolak")+'</span>';
+     var badge='<span class="tsq-badge '+it.status+'">'+(it.status==="pending"?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Menunggu':it.status==="approved"?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg> Disetujui':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Ditolak')+'</span>';
       var actions='<div class="tsq-actions">';
       if(it.status!=="approved")actions+='<button class="tsq-btn tsq-approve" onclick="decideToolSelfie('+i+',\'approved\')">Setujui</button>';
       if(it.status!=="rejected")actions+='<button class="tsq-btn tsq-reject" onclick="decideToolSelfie('+i+',\'rejected\')">Tolak</button>';
