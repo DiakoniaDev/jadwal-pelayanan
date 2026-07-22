@@ -361,16 +361,13 @@ body:not(.app-in) .home{animation:none}   /* first paint sits behind the gate �
         
         
 /* ── ROSTER PANEL ─────────── */
-.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height 2s cubic-bezier(.22,1,.36,1)}
-.roster {
-    background:#12151c;
-}
+.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height 1s linear}
+
 @keyframes rosterFadeIn{
-  0%  { opacity:0; transform:translateY(-8px) scaleY(.9); }
-  60% { opacity:1; transform:translateY(1px) scaleY(1.03); }
-  100%{ transform:translateY(0) scaleY(1); }
+  0%  { opacity:0; transform:translateY(-8px); }
+  100%{ opacity:1; transform:translateY(0); }
 }
-.roster-fadein{transform-origin:top;animation:rosterFadeIn 2s cubic-bezier(.16,1,.3,1) both}
+.roster-fadein{transform-origin:top;animation:rosterFadeIn 1s linear both}
 .roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#12151c;display:flex;flex-direction:column;gap:7px}
 .roster-spin{display:flex;align-items:center;gap:8px;font-size:13px;color:#8890aa;padding:4px}
 
