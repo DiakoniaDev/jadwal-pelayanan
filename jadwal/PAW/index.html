@@ -1953,7 +1953,7 @@ function loadMyAvailability(){
       var days=(res&&res.days)||[];
       st.availBlocked={};days.forEach(function(d){st.availBlocked[d]=true;});
       st.availDirty=false;
-      buildKetersediaanUI();
+      if(st.mainTab==="ketersediaan")buildKetersediaanUI();
     })
     .withFailureHandler(function(e){showErr(e.message);})
     .getMyAvailability(st.vol.name,st.vol.dept,st.availSelYear,st.availSelMonth);
@@ -2757,7 +2757,7 @@ function prefetchToolDresscode(){
     var depts=(res&&res.depts)||["PAW","Usher"];
     st.toolDressDepts=depts;
     if(depts.indexOf(st.toolDressDept)===-1)st.toolDressDept=depts[0];
-    var list=generateDressSlotsVol(y,m,(res&&res.items)||[],st.toolDressDept);
+    var list=generateDressSlotsVol(y,m,(res&&res.items)||[],first);
     st.toolDressList=list;
     st._toolDressByKey[y+"-"+m+"|"+first]={list:list,depts:depts};
     // Prefetch every other dept in background
@@ -2766,7 +2766,7 @@ function prefetchToolDresscode(){
       var ck=y+"-"+m+"|"+d;
       if(st._toolDressByKey[ck])return;
       callApi('getDresscodeList',[y,m,d]).then(function(r2){
-        st._toolDressByKey[ck]={list:generateDressSlotsVol(y,m,(r2&&r2.items)||[],st.toolDressDept),depts:depts};
+        st._toolDressByKey[ck]={list:generateDressSlotsVol(y,m,(r2&&r2.items)||[],d),depts:depts};
       }).catch(function(){});
     });
   }).catch(function(){});
@@ -2792,7 +2792,7 @@ function renderToolSonglist(){
   if(st.toolSongCardsKey===mkey&&(st.toolSongCards||[]).length){buildToolSonglistPage();return;}
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat songlist…</div></div>';
   google.script.run.withSuccessHandler(function(res){
-    st.toolSongCards=(res&&res.cards)||[];st.toolSongCardsKey=mkey;buildToolSonglistPage();
+    st.toolSongCards=(res&&res.cards)||[];st.toolSongCardsKey=mkey;if(st.mainTab==="tool-songlist")buildToolSonglistPage();
   }).withFailureHandler(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message)+'</div>';}).getSonglistCards(y,m,st.vol.dept);
 }
 
@@ -2916,7 +2916,7 @@ function renderDirektori(){
     if(res&&res.error){document.getElementById("content").innerHTML='<div class="dir-empty">'+esc(res.error)+'</div>';return;}
     _dirCache=(res&&res.people)||[];
     _dirDept=dept;
-    buildDirektoriUI(_dirCache);
+    if(st.mainTab==="direktori")buildDirektoriUI(_dirCache);
   }).catch(function(e){
     document.getElementById("content").innerHTML='<div class="dir-empty">Gagal memuat: '+esc(e.message||e)+'</div>';
   });
@@ -3051,11 +3051,11 @@ function renderToolDresscode(){
     if(st.toolDressDepts.indexOf(st.toolDressDept)===-1)st.toolDressDept=st.toolDressDepts[0];
     st.toolDressList=generateDressSlotsVol(st.viewYear,st.viewMonth,(res&&res.items)||[],st.toolDressDept)
     st._toolDressByKey[st.viewYear+"-"+st.viewMonth+"|"+st.toolDressDept]={list:st.toolDressList,depts:st.toolDressDepts};
-    buildToolDresscodePage();
+    if(st.mainTab==="tool-dresscode")buildToolDresscodePage();
   }).catch(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message||e)+'</div>';});
 }
 
-function setToolDressDept(d){st.toolDressDept=d;renderToolDresscode();}
+function setToolDressDept(d){st.toolDressDept=d;st.toolDressList=null;renderToolDresscode();}
 function chToolDressMonth(dir){st.viewMonth+=dir;if(st.viewMonth>11){st.viewMonth=0;st.viewYear++;}if(st.viewMonth<0){st.viewMonth=11;st.viewYear--;}renderToolDresscode();}
 
 function buildToolDresscodePage(){
@@ -3146,7 +3146,7 @@ function renderToolSelfie(){
   if(st._toolSelfieLoaded&&st.toolSelfieItems.length){buildToolSelfieQueue();return;}
   document.getElementById("content").innerHTML='<div class="loading"><div class="big-spin"><span></span><span></span><span></span></div><div class="ld-txt">Memuat selfie…</div></div>';
   callApi('getSelfieQueue',[st.vol.name]).then(function(res){
-    st.toolSelfieItems=(res&&res.items)||[];st._toolSelfieLoaded=true;buildToolSelfieQueue();
+    st.toolSelfieItems=(res&&res.items)||[];st._toolSelfieLoaded=true;if(st.mainTab==="tool-selfie")buildToolSelfieQueue();
   }).catch(function(e){document.getElementById("content").innerHTML='<div class="tsq-empty">Gagal: '+esc(e.message||e)+'</div>';});
 }
 
@@ -3417,7 +3417,7 @@ function silentRefreshVol_(){
     st.schedCache[st.vol.name]=data;
     try{localStorage.setItem(APP_CONFIG.storagePrefix+"schedCache",JSON.stringify(data));}catch(e){}
     if(data.extras)seedExtras_(data.extras);
-    renderJadwal();
+    if(st.mainTab==="jadwal")renderJadwal();
   }).catch(function(){});
 }
         
