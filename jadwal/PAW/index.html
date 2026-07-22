@@ -361,13 +361,13 @@ body:not(.app-in) .home{animation:none}   /* first paint sits behind the gate �
         
         
 /* ── ROSTER PANEL ─────────── */
-.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height .3s linear}
+.roster{max-height:0;overflow:hidden;transform-origin:top;transition:max-height .45s linear}
 
 @keyframes rosterFadeIn{
   0%  { opacity:0; transform:translateY(-8px); }
   100%{ opacity:1; transform:translateY(0); }
 }
-.roster-fadein{transform-origin:top;animation:rosterFadeIn .3s linear both}
+.roster-fadein{transform-origin:top;animation:rosterFadeIn .45s linear both}
 .roster-inner{border-top:1px solid rgba(255,255,255,.06);padding:10px;background:#12151c;display:flex;flex-direction:column;gap:7px}
 .roster-spin{display:flex;align-items:center;gap:8px;font-size:13px;color:#8890aa;padding:4px}
 
@@ -1790,7 +1790,7 @@ function scrollToCard(card){
   setTimeout(function(){
     var top=card.getBoundingClientRect().top+window.pageYOffset-90;
     window.scrollTo({top:top,behavior:"smooth"});
-  },100); // was 80 — now waits out the .34s roster collapse transition first
+  },85); // was 80 — now waits out the .34s roster collapse transition first
 }
         
 function toggleCard(key,myName){
@@ -1849,6 +1849,9 @@ function growRoster(kid){
   if(!card||!card.classList.contains("open"))return;  // closed card: never resize it open
   requestAnimationFrame(function(){
     el.style.maxHeight=el.scrollHeight+"px";
+    setTimeout(function(){
+      if(card.classList.contains("open"))el.style.maxHeight=el.scrollHeight+"px";
+    },350);
   });
 }
 
@@ -2390,7 +2393,7 @@ function saveSongEdit_(kid){
     return{judul:s.judul.trim(),pencipta:(s.pencipta||"").trim(),link:(s.link||"").trim(),lyricsLink:(s.lyricsLink||"").trim()};
   });
   var btn=document.getElementById("song-save-"+kid);
-  if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
+  if(btn){btn.disabled=true;btn.textContent="Menyimpan…";btn.classList.remove("dirty");btn.style.opacity=".5";}
   var dept=st.vol&&st.vol.dept||"PAW";
   var svc=svcOf_(ev);
   var songMap=ed.lyricsLink||"";
