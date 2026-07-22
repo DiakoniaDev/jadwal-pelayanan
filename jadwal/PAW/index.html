@@ -1255,6 +1255,7 @@ function navTo(tab){
   // ringkasan, empty states, no-vol) that used to skip their own contentReady_
   // and leave the page stuck at opacity:0.
   contentReady_();
+  silentRefreshVol_();
 }
 
 /* ── ONBOARDING GATE ── */
@@ -1494,6 +1495,7 @@ function fetchSchedule_(name,onOk,onErr){
   w=st.schedInflight[name]={ok:[onOk],err:[onErr]};
   google.script.run.withSuccessHandler(function(d){
     st.schedCache[name]=d;delete st.schedInflight[name];
+    _volCacheTimestamp=Date.now();
     // Persist to localStorage so next visit is instant
     try{localStorage.setItem(APP_CONFIG.storagePrefix+"schedCache",JSON.stringify(d));}catch(e){}
     w.ok.forEach(function(f){try{f(d);}catch(err){console.error(err);}});
@@ -1561,6 +1563,7 @@ function gotEvents(resp){
   prefetchNotes_(dept);
   prefetchRingkasan_(dept);
   prefetchKetersediaan_(dept);
+  prefetchDirektori_(dept);
 }
 
 function prefetchNotes_(dept){
@@ -1610,6 +1613,12 @@ function prefetchKetersediaan_(dept){
     }).withFailureHandler(function(){}).getMyAvailability(st.vol.name,st.availSelYear,st.availSelMonth);
   }).withFailureHandler(function(){}).getOpenAvailabilityMonths(dept);
 }      
+function prefetchDirektori_(dept){
+  if(_dirCache && _dirDept===dept)return;
+  callApi('getVolunteerDirectory',[st.vol.name,dept]).then(function(res){
+    if(res&&!res.error){_dirCache=(res&&res.people)||[];_dirDept=dept;}
+  }).catch(function(){});
+}        
         
 /* ── JADWAL TAB ── */
 function renderJadwal(){
@@ -2889,6 +2898,8 @@ function saveToolSonglist(){
 /* ── DIRECTORY ── */
 var _dirCache=null;
 var _dirDept="";
+var _volCacheTimestamp=0;
+var VOL_CACHE_STALE_MS=60000;
 
 function renderDirektori(){
   var dept=st.vol&&st.vol.dept;
@@ -3395,6 +3406,18 @@ function appLoaded_(){
   h.classList.remove("drop");
   void h.offsetWidth;
   h.classList.add("drop");
+}
+function silentRefreshVol_(){
+  if(!st.vol||!st.vol.name)return;
+  if(Date.now()-_volCacheTimestamp<VOL_CACHE_STALE_MS)return;
+  _volCacheTimestamp=Date.now();
+  callApi('getVolunteerSchedule',[st.vol.name]).then(function(data){
+    if(!data||data.error)return;
+    st.schedCache[st.vol.name]=data;
+    try{localStorage.setItem(APP_CONFIG.storagePrefix+"schedCache",JSON.stringify(data));}catch(e){}
+    if(data.extras)seedExtras_(data.extras);
+    renderJadwal();
+  }).catch(function(){});
 }
         
 function av(url,name,size,role){var fz=Math.round(size*.27),init=initials(name),col=C(role||"soundman").fg,fb='<span style="font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'">'+init+'</span>';if(!url)return fb;return'<img src="'+url+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;display:block" alt="'+esc(name)+'" onerror="this.outerHTML=\'<span style=font-size:'+fz+'px;font-weight:800;font-family:Syne,sans-serif;line-height:1;color:'+col+'>'+init+'</span>\'">';}
