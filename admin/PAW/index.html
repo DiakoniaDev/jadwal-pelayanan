@@ -359,11 +359,14 @@ table.ring-tbl{border-collapse:collapse;min-width:100%;font-size:12px}
 .avail-role-block{margin-bottom:22px}
 .avail-role-hdr{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:8px;letter-spacing:-.01em}
 .avail-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;border:1px solid rgba(255,255,255,.08);transform:translateZ(0)}
-table.avail-tbl{border-collapse:collapse;font-size:12px}
-.avail-tbl th,.avail-tbl td{border:1px solid rgba(255,255,255,.07);padding:6px 8px;text-align:center;vertical-align:middle;white-space:nowrap}
+table.avail-tbl{border-collapse:separate;border-spacing:0;font-size:12px}
+.avail-tbl th,.avail-tbl td{border:1px solid rgba(255,255,255,.07);border-left:none;border-top:none;padding:6px 8px;text-align:center;vertical-align:middle;white-space:nowrap}
+.avail-tbl tr>:first-child{border-left:1px solid rgba(255,255,255,.07)}
+.avail-tbl thead>tr:first-child>th{border-top:1px solid rgba(255,255,255,.07)}
 .avail-tbl th{background:#1a1e28;font-weight:700;font-size:11px;color:#8890aa;line-height:1.25}
 .avail-name-col{position:sticky;left:0;z-index:2;background:#12151c;text-align:left;font-weight:600;color:#f0f0f5;min-width:118px;max-width:150px;overflow:hidden;text-overflow:ellipsis;box-shadow:3px 0 6px -3px rgba(0,0,0,.5)}
-.avail-tbl th.avail-name-col{color:#8890aa;font-weight:700}
+.avail-tbl td.avail-name-col{background:#12151c}
+.avail-tbl th.avail-name-col{color:#8890aa;font-weight:700;background:#1a1e28}
 .avail-date-col{min-width:44px}
 .avail-cell{padding:5px 6px}
 .avail-pill{display:inline-block;width:22px;height:12px;border-radius:20px}
@@ -3085,9 +3088,8 @@ function saveRoster(){
       });
     });
   });
-  st.dirty=false;_rosterSnapshot=JSON.stringify({r:st.rosterState,s:st.subState});
+  st.dirty=false;
   invalidateCurrentMonthCache_();
-  updateSaveBtn();
   closeRoster();renderJadwal();scrollToSavedCard(slot.key);
   showToast("Jadwal tersimpan ✓","ok");
 
