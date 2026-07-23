@@ -944,7 +944,11 @@ Object.keys(API_PARAM_MAP).forEach(function(fnName){
 var google = { script: { run: null } };
 Object.defineProperty(google.script, 'run', { get: function(){ return new GasRun(); } });
 
-var SPLASH_MIN_MS = 1400;
+// If we have cached data, the splash is purely cosmetic — keep it short.
+// First-time users (no cache) get the full animation while data loads.
+var _hasCachedBoot=false;
+try{_hasCachedBoot=!!(localStorage.getItem(APP_CONFIG.storagePrefix+"configCache")&&localStorage.getItem(APP_CONFIG.storagePrefix+"volsCache"));}catch(e){}
+var SPLASH_MIN_MS = _hasCachedBoot ? 400 : 1400;
 var splashStart = Date.now();
 
 // ============================================================
@@ -978,12 +982,6 @@ var APP_CONFIG = {
     try{localStorage.setItem(APP_CONFIG.storagePrefix+"schedCache",JSON.stringify(d));}catch(e){}
   }).withFailureHandler(function(){}).getVolunteerSchedule(savedName);
 })();   
-(function earlyConfigPrefetch_(){
-  // Warm the two gate-blocking calls — if they finish before the user taps
-  // Masuk, markGateReady_ fires instantly and the splash clears faster.
-  callApi('getConfig',[]).then(function(){}).catch(function(){});
-  callApi('getAllVolunteers',[]).then(function(){}).catch(function(){});
-})();        
         
 var splashGone = false;
 // Driven by markGateReady_() now, not window.load — the splash IS the data loader,
@@ -1150,7 +1148,8 @@ function titleTwoLines(text){
   return esc(parts.slice(0,mid).join(" "))+"<br>"+esc(parts.slice(mid).join(" "));
 }
 
-google.script.run.withSuccessHandler(function(c){
+// ── Extracted apply helpers (called by both cache hydration and network) ──
+function applyConfig_(c){
   var church=c.churchName||"GMS Salatiga";
   document.getElementById("hdr-l1").innerHTML=titleTwoLines("Beranda");
   document.getElementById("dr-team").textContent=APP_CONFIG.appTitle;
@@ -1162,27 +1161,37 @@ google.script.run.withSuccessHandler(function(c){
   st.cardTabsByDept=c.cardTabsByDept||{};
   st.departments=(c.departments||Object.keys(st.rolesByDept)).slice().sort(function(a,b){return a.localeCompare(b);});
   populateDeptFilter();
-if(c.logoUrl){
-  ["dr-logo","gate-logo-img"].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){
-      el.style.display="block";
-      el.onload=function(){ el.classList.add("loaded"); };
-      el.src=c.logoUrl;
-    }
-  });
+  if(c.logoUrl){
+    ["dr-logo","gate-logo-img"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){
+        el.style.display="block";
+        el.onload=function(){ el.classList.add("loaded"); };
+        el.src=c.logoUrl;
+      }
+    });
+  }
 }
-markGateReady_("config");
+function applyVolunteers_(list){
+  st.allMusicians=list||[];
+}
+
+// ── NETWORK FETCH (always fires — updates cache + state silently) ──
+google.script.run.withSuccessHandler(function(c){
+  applyConfig_(c);
+  try{localStorage.setItem(APP_CONFIG.storagePrefix+"configCache",JSON.stringify(c));}catch(e){}
+  markGateReady_("config");
 }).withFailureHandler(function(e){
   console.warn("getConfig failed",e);
   markGateReady_("config");
 }).getConfig();
 google.script.run.withSuccessHandler(function(list){
-  st.allMusicians=list||[];
+  applyVolunteers_(list);
+  try{localStorage.setItem(APP_CONFIG.storagePrefix+"volsCache",JSON.stringify(list));}catch(e){}
   markGateReady_("vols");
 }).withFailureHandler(function(e){
   console.warn("getAllVolunteers failed",e);
-  st.allMusicians=[];
+  if(!st.allMusicians||!st.allMusicians.length) st.allMusicians=[];
   markGateReady_("vols");
 }).getAllVolunteers();
         
@@ -1204,6 +1213,26 @@ function markGateReady_(which){
 
 // Safety valve: a dead API must never trap the person behind the loader.
 setTimeout(function(){markGateReady_("config");markGateReady_("vols");},8000);
+
+// ── INSTANT HYDRATION from localStorage (returning users skip the wait) ──
+// Runs AFTER gateReady_ + markGateReady_ are initialized.
+// If both caches hit, the splash lifts in ~400ms instead of waiting for the network.
+(function hydrateFromCache_(){
+  try{
+    var cfgRaw=localStorage.getItem(APP_CONFIG.storagePrefix+"configCache");
+    if(cfgRaw){
+      var cfg=JSON.parse(cfgRaw);
+      if(cfg){applyConfig_(cfg);markGateReady_("config");}
+    }
+  }catch(e){console.warn("config cache hydrate fail",e);}
+  try{
+    var volRaw=localStorage.getItem(APP_CONFIG.storagePrefix+"volsCache");
+    if(volRaw){
+      var vols=JSON.parse(volRaw);
+      if(vols){applyVolunteers_(vols);markGateReady_("vols");}
+    }
+  }catch(e){console.warn("vols cache hydrate fail",e);}
+})();
 
 function prefillGateFromMemory_(){
   var savedName=null;
@@ -1640,7 +1669,7 @@ function prefetchDirektori_(dept){
 function renderJadwal(){
   if(!st.vol){document.getElementById("content").innerHTML=homeHTML();return;}
   var v=st.vol;var up=st.allEvents.filter(function(e){return !e.isPast;});
-  var h='<div class="vol-card" onclick="confirmLogout()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
+  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
     '<div class="sched-tabs"><button class="sched-tab'+(st.schedTab==="jadwal"?" on":"")+'" onclick="switchST(\'jadwal\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</button><button class="sched-tab'+(st.schedTab==="riwayat"?" on":"")+'" onclick="switchST(\'riwayat\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat</button></div>'+
     (st.schedTab==="jadwal"?buildSched():buildRiwayat());
   document.getElementById("content").innerHTML=h;
@@ -2715,17 +2744,60 @@ function buildRingkasanUI(data){
     if(s.isSpecial) specialDates[s.date]=true;
   });
 
-  var dateGroups={},dateOrder=[];
-  satSun.forEach(function(s){
-    if(!dateGroups[s.date]){dateGroups[s.date]={day:s.day,slots:[]};dateOrder.push(s.date);}
-    dateGroups[s.date].slots.push(s);
+  // ── MERGE PASS: collapse adjacent same-date services with identical rosters ──
+  function slotSig_(slots,role){
+    return (slots[role]||[]).map(function(p){return(p.name||p)+"~"+(p.sub||"");}).join("|");
+  }
+  function mergeLabel_(names){
+    if(names.length<=1)return names[0]||"";
+    var words=names[0].split(/\s+/);
+    for(var w=words.length;w>=1;w--){
+      var pfx=words.slice(0,w).join(" ");
+      var ok=names.every(function(n){return n.indexOf(pfx)===0;});
+      if(ok){var clean=pfx.replace(/\s*\d+$/,"").trim();return clean||pfx;}
+    }
+    return names.join(" / ");
+  }
+
+  var cols=[];
+  for(var ci=0;ci<satSun.length;ci++){
+    var s=satSun[ci],merged=false;
+    if(cols.length>0){
+      var prev=cols[cols.length-1];
+      if(prev.date===s.date){
+        var identical=true;
+        roles.forEach(function(r){
+          if(slotSig_(prev.svcs[0].slots,r)!==slotSig_(s.slots,r))identical=false;
+        });
+        if(identical){prev.svcs.push(s);merged=true;}
+      }
+    }
+    if(!merged) cols.push({svcs:[s],date:s.date,isSpecial:!!s.isSpecial});
+  }
+  // Generate labels and times for each column
+  cols.forEach(function(mc){
+    if(mc.svcs.length===1){
+      mc.label=serviceLabel(mc.svcs[0].service);
+      mc.time=mc.svcs[0].time||defaultTimesFor(mc.svcs[0].service,true);
+    } else {
+      var names=mc.svcs.map(function(x){return serviceLabel(x.service);});
+      mc.label=mergeLabel_(names);
+      mc.time=mc.svcs.map(function(x){return x.time||defaultTimesFor(x.service,true);}).join(" · ");
+      if(mc.svcs.some(function(x){return!!x.isSpecial;}))mc.isSpecial=true;
+    }
   });
 
+  // Rebuild date and week groupings from merged columns
+  var dateGroups={},dateOrder=[];
+  cols.forEach(function(mc){
+    if(!dateGroups[mc.date]){dateGroups[mc.date]={cols:[]};dateOrder.push(mc.date);}
+    dateGroups[mc.date].cols.push(mc);
+  });
   var weekMap={},weekOrder=[];
   dateOrder.forEach(function(ds){
     var d=new Date(ds+"T00:00:00"),w=Math.ceil(d.getDate()/7);
-    if(!weekMap[w]){weekMap[w]={dates:[],count:0};weekOrder.push(w);}
-    weekMap[w].dates.push(ds);weekMap[w].count+=dateGroups[ds].slots.length;
+    if(!weekMap[w]){weekMap[w]={count:0};weekOrder.push(w);}
+    weekMap[w].count+=dateGroups[ds].cols.length;
   });
 
   h+='<div id="ring-table-wrap" style="background:#0a0c10;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">';
@@ -2736,53 +2808,59 @@ function buildRingkasanUI(data){
   '</div>';
 
   var ringColWidth=90, ringLabelWidth=80;
-  var ringTotalWidth=ringLabelWidth+(satSun.length*ringColWidth);
+  var ringTotalWidth=ringLabelWidth+(cols.length*ringColWidth);
   h+='<div class="ring-scroll"><table class="ring-tbl" style="width:'+ringTotalWidth+'px"><colgroup><col style="width:'+ringLabelWidth+'px">';
-  satSun.forEach(function(){h+='<col style="width:'+ringColWidth+'px">';});
+  cols.forEach(function(){h+='<col style="width:'+ringColWidth+'px">';});
   h+='</colgroup>';
 
+  // Week header
   h+='<tr><th class="role-col"></th>';
   weekOrder.forEach(function(w){h+='<th class="week-hdr" colspan="'+weekMap[w].count+'">WEEK '+w+'</th>';});
   h+='</tr>';
 
+  // Date header
   h+='<tr><th class="role-col"></th>';
   dateOrder.forEach(function(ds){
     var d=new Date(ds+"T00:00:00");
     var dstr=HARI_L[d.getDay()]+", "+d.getDate()+" "+BLN_L[d.getMonth()];
     var isSpec=!!specialDates[ds];
     var style=isSpec?'background:rgba(192,132,252,.15);color:#c084fc':'';
-    h+='<th class="date-hdr" colspan="'+dateGroups[ds].slots.length+'" style="'+style+'">'+esc(dstr)+'</th>';
+    h+='<th class="date-hdr" colspan="'+dateGroups[ds].cols.length+'" style="'+style+'">'+esc(dstr)+'</th>';
   });
   h+='</tr>';
 
+  // Service header (merged labels)
   h+='<tr><th class="role-col"></th>';
-  satSun.forEach(function(s){
-    var isSpec=!!s.isSpecial;
+  cols.forEach(function(mc){
+    var isSpec=mc.isSpecial;
     var style=isSpec?'background:rgba(192,132,252,.12);color:#c084fc':'';
-    var svcTime=s.time||defaultTimesFor(s.service,true);
-    h+='<th class="svc-hdr" style="'+style+'">'+esc(serviceLabel(s.service))+'<br><span style="color:#4a5070;font-size:10px">'+esc(svcTime)+'</span></th>';
+    h+='<th class="svc-hdr" style="'+style+'">'+esc(mc.label)+'<br><span style="color:#4a5070;font-size:10px">'+esc(mc.time)+'</span></th>';
   });
   h+='</tr>';
 
+  // Speaker row
   if(roles.indexOf("Speaker")!==-1){
     var spC=C("Speaker"),spTint=rowTint("Speaker");
     h+='<tr><td class="role-col" style="color:'+spC.fg+';background:'+spC.bg+'">'+esc(roleLabel("Speaker"))+'</td>';
-    satSun.forEach(function(s){
+    cols.forEach(function(mc){
+      var s=mc.svcs[0];
       var people=s.slots["Speaker"]||[];
       var names=people.map(function(p){
         var nm=p.name||p,sub=p.sub;
         return sub?'<s style="color:#f87171">'+esc(nm)+'</s><br><span style="color:#4ade80">'+esc(sub)+'</span>':esc(nm);
       }).join('<br><br>');
-      var cellBg=s.isSpecial?'rgba(192,132,252,.14)':spTint;
+      var cellBg=mc.isSpecial?'rgba(192,132,252,.14)':spTint;
       h+='<td class="'+(names?"cell-filled":"cell-empty")+'" style="background:'+cellBg+'">'+names+'</td>';
     });
     h+='</tr>';
   }
 
+  // Group row
   var hasGroups=Object.keys(groups).length>0;
   if(hasGroups){
     h+='<tr><th class="role-col" style="color:#8890aa;font-size:10px;letter-spacing:.06em;text-transform:uppercase">Group</th>';
-    satSun.forEach(function(s){
+    cols.forEach(function(mc){
+      var s=mc.svcs[0];
       var bandRoles=["WL","Singer","Keys","Guitar","Bass","Drums"];
       var g=null,isMix=false;
       bandRoles.forEach(function(role){
@@ -2796,24 +2874,26 @@ function buildRingkasanUI(data){
       });
       var label=isMix?"MIX":(g?"GROUP "+String(g).replace(/^group\s*/i,'').trim():"—");
       var col=isMix?"color:#f59e0b":"color:#e8b84b";
-      var grpBg=s.isSpecial?'background:rgba(192,132,252,.18);':'background:#1a1e28;';
+      var grpBg=mc.isSpecial?'background:rgba(192,132,252,.18);':'background:#1a1e28;';
       h+='<th style="'+grpBg+'font-size:11px;font-weight:800;'+col+'">'+label+'</th>';
     });
     h+='</tr>';
   }
 
+  // Role rows
   roles.forEach(function(role){
     if(role==="Speaker")return;
     var c=C(role);
     var tint=rowTint(role);
     h+='<tr><td class="role-col" style="color:'+c.fg+';background:'+c.bg+'">'+esc(roleLabel(role))+'</td>';
-    satSun.forEach(function(s){
+    cols.forEach(function(mc){
+      var s=mc.svcs[0];
       var people=s.slots[role]||[];
       var names=people.map(function(p){
         var nm=p.name||p,sub=p.sub;
         return sub?'<s style="color:#f87171">'+esc(nm)+'</s><br><span style="color:#4ade80">'+esc(sub)+'</span>':esc(nm);
       }).join('<br><br>');
-      var cellBg=s.isSpecial?'rgba(192,132,252,.14)':tint;
+      var cellBg=mc.isSpecial?'rgba(192,132,252,.14)':tint;
       h+='<td class="'+(names?"cell-filled":"cell-empty")+'" style="background:'+cellBg+'">'+names+'</td>';
     });
     h+='</tr>';
@@ -2907,7 +2987,7 @@ function renderMasukan(){
 }
         
 function kirimMasukan(){
-  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){showToolModal("Tidak Bisa Kirim","Pesan tidak boleh kosong. Tulis pesan terlebih dahulu.","OK",function(){},"info");return;}
+  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){showToolModal("Tidak Bisa Kirim","Pesan tidak boleh kosong. Tulis pesan terlebih dahulu.","OK",function(){});return;}
   var btn=document.getElementById("fb-btn");btnLoading(btn,"Mengirim…",true);
   google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico"></div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(st.vol&&st.vol.dept,n,p);
 }
@@ -3286,13 +3366,13 @@ function onToolDressInput(i){var btn=document.getElementById("tdc-save-"+i);if(b
 function saveToolDresscode(i){
   var it=(st.toolDressList||[])[i];if(!it)return;
   var inp=document.getElementById("tdc-url-"+i),url=inp?inp.value.trim():"";
-  var btn=document.getElementById("tdc-save-"+i);if(btn){btnLoading(btn,"Menyimpan…",true);}
+  var btn=document.getElementById("tdc-save-"+i);if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
   callApi('saveDresscode',[it.date,it.service,url,st.toolDressDept,st.vol.name]).then(function(res){
     if(res&&res.ok){it.pdfUrl=url;st._toolDressByKey={};
       Object.keys(st.dressCache).forEach(function(k){if(k.indexOf(it.date)!==-1)delete st.dressCache[k];});
       showToast(res.msg||"Dresscode tersimpan.","ok");buildToolDresscodePage();}
-    else{if(btn){btnReset(btn,"Simpan ✓");btn.classList.add("dirty");}showToast((res&&res.msg)||"Gagal.","err");}
-  }).catch(function(e){if(btn){btnReset(btn,"Simpan ✓");btn.classList.add("dirty");}showToast("Gagal: "+(e.message||e),"err");});
+    else{if(btn){btn.disabled=false;btn.classList.add("dirty");}showToast((res&&res.msg)||"Gagal.","err");}
+  }).catch(function(e){if(btn){btn.disabled=false;btn.classList.add("dirty");}showToast("Gagal: "+(e.message||e),"err");});
 }
 
 function toggleToolDressAdd(){
@@ -3448,20 +3528,11 @@ function showToast(msg,type){
 }
 
 var _toolModalCb=null;
-function showToolModal(title,msg,confirmTxt,cb,variant){
+function showToolModal(title,msg,confirmTxt,cb){
   _toolModalCb=cb;
   document.getElementById("tool-modal-title").textContent=title;
   document.getElementById("tool-modal-msg").textContent=msg;
-  var confirmBtn=document.getElementById("tool-modal-confirm");
-  var cancelBtn=document.getElementById("tool-modal-cancel");
-  confirmBtn.textContent=confirmTxt;
-  if(variant==="info"){
-    confirmBtn.style.background="#e8b84b";confirmBtn.style.color="#0a0c10";
-    cancelBtn.style.display="none";
-  } else {
-    confirmBtn.style.background="#f87171";confirmBtn.style.color="#fff";
-    cancelBtn.style.display="";
-  }
+  document.getElementById("tool-modal-confirm").textContent=confirmTxt;
   var ov=document.getElementById("tool-modal-ov"),box=document.getElementById("tool-modal-box");
   if(ov){ov.style.opacity="1";ov.style.pointerEvents="all";}
   if(box)box.style.transform="translateX(-50%) translateY(0)";
@@ -3486,11 +3557,8 @@ function chMonth(d){
 }
 function scrollToDate(iso){var pre="card-"+iso.replace(/-/g,"_")+"_";var cards=document.querySelectorAll(".ecard");for(var i=0;i<cards.length;i++){if(cards[i].id.indexOf(pre)===0){var top=cards[i].getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:top,behavior:"smooth"});return;}}}
 
-// Tapping the name card (vol-card) asks for confirmation, then sends
-// the person back to the onboarding gate to switch identity.
-function confirmLogout(){
-  showToolModal("Ganti Volunteer","Yakin ingin keluar dan ganti volunteer?","Keluar",function(){logoutToGate();});
-}
+// Tapping the name card (vol-card) sends the person back to the onboarding
+// gate to switch identity, replacing the old in-page search "✕ clear" flow.
 function logoutToGate(){
   try{localStorage.removeItem(APP_CONFIG.storagePrefix+"schedCache");}catch(e){}      
   try{localStorage.removeItem(APP_CONFIG.storagePrefix + "volName");}catch(e){console.warn("localStorage remove failed",e);}
@@ -3791,7 +3859,7 @@ updateOnlineStatus_();
   <div id="tool-modal-msg" style="font-size:14px;color:#8890aa;line-height:1.65;margin-bottom:24px"></div>
   <div style="display:flex;flex-direction:column;gap:8px">
     <button id="tool-modal-confirm" onclick="doToolModalConfirm()" style="width:100%;padding:14px;border-radius:13px;border:none;background:#f87171;color:#fff;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer"></button>
-    <button id="tool-modal-cancel" onclick="closeToolModal()" style="width:100%;padding:14px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:none;color:#8890aa;font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer">Batal</button>
+    <button onclick="closeToolModal()" style="width:100%;padding:14px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:none;color:#8890aa;font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer">Batal</button>
   </div>
 </div>
 <div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e24b4a;color:#fff;text-align:center;padding:6px 16px;font-size:13px;font-weight:500;letter-spacing:.01em;transition:transform .3s ease;transform:translateY(-100%);">Kamu sedang offline — data mungkin tidak tersimpan</div>        
