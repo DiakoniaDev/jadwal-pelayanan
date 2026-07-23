@@ -2352,7 +2352,7 @@ function filterGrpDd(q){
         return members[r][0]||"";
       }).filter(Boolean).join(", ");
       h+='<div class="rs-dd-item'+selCls+'" onmousedown="pickGrpDd(\''+escQ(g)+'\')">'+
-        '<span>'+esc(g)+'</span>'+
+        '<span>'+esc(groupLabel(g))+'</span>'+
         '<span class="rs-dd-cnt" style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(preview)+'</span>'+
       '</div>';
     });
@@ -2534,14 +2534,14 @@ function buildPersonRoster(slot){
 function autoAssignAll(){
   var vols=(st.data&&(st.data.musicians||st.data.volunteers));
   if(!vols){showToast("Data belum dimuat.","warn");return;}
-  var isPaw=(st.dept==="PAW");
   var groups=(st.data&&st.data.groups)||{};
   var groupNames=Object.keys(groups);
-  if(isPaw && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
+  var hasGroups=(groupNames.length>0);
+  if(hasGroups && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
   var emptySlots=st.slots.filter(function(s){return countFilled(s)===0;});
   if(!emptySlots.length){showToast("Semua sudah terisi! 🎉","ok");return;}
 
-  var msg=(isPaw
+  var msg=(hasGroups
     ? ("Mengisi "+emptySlots.length+" ibadah kosong — band diisi per group secara bergiliran.")
     : ("Mengisi "+emptySlots.length+" ibadah kosong — tiap peran diisi orang paling jarang bertugas."))
     +" Volunteer yang blokir tanggalnya dilewati.";
@@ -2551,7 +2551,7 @@ function autoAssignAll(){
     var gi=Math.floor(Math.random()*Math.max(1,groupNames.length));
     var payload=[],built=[];
     emptySlots.forEach(function(slot){
-      var res=isPaw ? buildGroupRoster(groupNames[gi++ % groupNames.length],slot) : buildPersonRoster(slot);
+      var res=hasGroups ? buildGroupRoster(groupNames[gi++ % groupNames.length],slot) : buildPersonRoster(slot);
       var clean={};
       PAW_ROLES.forEach(function(role){
         var names=(res[role]||[]).filter(function(x){return x;});
@@ -3058,16 +3058,14 @@ function refreshCopyRow_(){
 function saveRoster(){
   if(window.isAppOffline && window.isAppOffline()){showToast("Kamu sedang offline. Coba lagi nanti.","err");return;}
   if(!st.currentSlot)return;
-  var btn=document.getElementById("rp-save");btn.disabled=true;btn.textContent="Menyimpan…";
   var clean={};
   PAW_ROLES.forEach(function(role){
-    // Non-PAW: never write Speaker (it's PAW's data)
     if(role==="Speaker"&&st.dept!=="PAW"&&st.dept!=="EK")return;
     var arr=[];
     (st.rosterState[role]||[]).forEach(function(name,i){
       name=(name||"").trim(); if(!name)return;
       var sub=((st.subState[role]||[])[i]||"").trim();
-      arr.push(sub?{name:name,sub:sub}:name); // {name,sub} when substituted, else plain name
+      arr.push(sub?{name:name,sub:sub}:name);
     });
     if(arr.length)clean[role]=arr;
   });
@@ -3075,30 +3073,29 @@ function saveRoster(){
   var box=document.getElementById("rp-copy-all");
   var targets=[slot].concat((box&&box.checked)?siblingSlots_(slot):[]);
 
-  function ok(res){
-    btn.disabled=false;btn.textContent="Simpan Jadwal ✓";
-    if(!(res&&res.ok)){showToast((res&&res.msg)||"Gagal menyimpan.","err");return;}
-    invalidateCurrentMonthCache_();
-    st.dirty=false;updateSaveBtn();showToast(res.msg,"ok");
-    // Mirror the save into local state for every service written, so the jadwal
-    // list is correct without a refetch.
-    targets.forEach(function(t){
-      t.slots={};
-      Object.keys(clean).forEach(function(r){
-        t.slots[r]=clean[r].map(function(e){
-          return (e&&typeof e==="object")?{name:e.name,sub:e.sub||""}:{name:e,sub:""};
-        });
+  // ── OPTIMISTIC UI: update local state + close roster BEFORE the network call ──
+  targets.forEach(function(t){
+    t.slots={};
+    Object.keys(clean).forEach(function(r){
+      t.slots[r]=clean[r].map(function(e){
+        return (e&&typeof e==="object")?{name:e.name,sub:e.sub||""}:{name:e,sub:""};
       });
     });
-    st.dirty=false;_rosterSnapshot=JSON.stringify({r:st.rosterState,s:st.subState});
-    closeRoster();renderJadwal();scrollToSavedCard(slot.key);
-  }
-  function fail(e){btn.disabled=false;btn.textContent="Simpan Jadwal ✓";showToast("Error: "+(e&&e.message||e),"err");}
+  });
+  st.dirty=false;_rosterSnapshot=JSON.stringify({r:st.rosterState,s:st.subState});
+  invalidateCurrentMonthCache_();
+  updateSaveBtn();
+  closeRoster();renderJadwal();scrollToSavedCard(slot.key);
+  showToast("Jadwal tersimpan ✓","ok");
 
-function doSave(){
+  // ── BACKGROUND SAVE: fire-and-forget, only toast on failure ──
+  function fail(e){showToast("⚠️ Gagal menyimpan ke server: "+(e&&e.message||e)+". Buka kembali dan simpan ulang.","err");}
+  function ok(res){
+    if(!(res&&res.ok)){showToast("⚠️ Server: "+(res&&res.msg||"Gagal menyimpan")+". Buka kembali dan simpan ulang.","err");}
+  }
+
+  function doSave(){
     if(targets.length>1){
-      // One batched request for all siblings — each keeps its own time and
-      // isSpecial flag, only the roster is copied across.
       var payload=targets.map(function(t){
         return {dateStr:t.date,service:t.service,time:t.time,dayName:t.day,roster:clean,isSpecial:!!t.isSpecial};
       });
@@ -3110,9 +3107,6 @@ function doSave(){
     }
   }
 
-  // Renamed via applyEdit? The backend replaces rows by date|service|time, so the
-  // OLD rows would survive untouched and the service would appear twice. Delete
-  // them first, then save under the new identity.
   if(st.origService && (st.origService!==slot.service || st.origTime!==slot.time)){
     google.script.run
       .withSuccessHandler(function(){ st.origService=slot.service; st.origTime=slot.time; doSave(); })
