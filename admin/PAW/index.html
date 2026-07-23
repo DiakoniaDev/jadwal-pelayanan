@@ -293,8 +293,9 @@ body.app-in .hdr{animation:hdrSlideIn .8s cubic-bezier(.22,1,.36,1) both}
 .rp-auto-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:11px;background:rgba(232,184,75,.13);border:1.5px solid rgba(232,184,75,.28);color:#e8b84b;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;margin-top:24px;margin-bottom:16px}
 
 .rp-auto-btn:active{background:rgba(232,184,75,.22)}
-.rp-body{flex:1;overflow-y:auto;padding:0px var(--page-pad) 200px}
-.rp-save-bar{position:absolute;bottom:0;left:0;right:0;padding:12px var(--page-pad) calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,#0d0f14 85%,transparent);display:flex;flex-direction:column;gap:8px}
+.rp-scroll-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rp-body{padding:0px var(--page-pad) 0}
+.rp-save-bar{padding:20px var(--page-pad) calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px}
 .rp-save-btn{width:100%;padding:14px;border-radius:13px;border:none;background:#333744;color:#666a7a;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:default;transition:background .25s,color .25s}
 .rp-save-btn.dirty{background:#e8b84b;color:#0a0c10;cursor:pointer}
 .rp-save-btn:active{opacity:.85;transform:scale(.98)}
@@ -921,14 +922,16 @@ body.offline .dr{padding-top:calc(env(safe-area-inset-top,0px) + 29px)}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Auto Assign Ibadah Ini
       </button>
     </div>
-    <div class="rp-body" id="rp-body"></div>
-    <div class="rp-save-bar">
-      <label class="rp-copy-row" id="rp-copy-row" style="display:none">
-        <input type="checkbox" class="chk-box" id="rp-copy-all" onchange="onCopyToggle_()">
-        <span id="rp-copy-lbl">Terapkan juga ke ibadah lain</span>
-      </label>
-      <button class="rp-save-btn" id="rp-save" onclick="saveRoster()">Simpan Jadwal ✓</button>
-      <button class="rp-del-btn" onclick="deleteThisService()">Hapus</button>
+    <div class="rp-scroll-wrap" id="rp-scroll-wrap">
+      <div class="rp-body" id="rp-body"></div>
+      <div class="rp-save-bar" id="rp-save-bar">
+        <label class="rp-copy-row" id="rp-copy-row" style="display:none">
+          <input type="checkbox" class="chk-box" id="rp-copy-all" onchange="onCopyToggle_()">
+          <span id="rp-copy-lbl">Terapkan juga ke ibadah lain</span>
+        </label>
+        <button class="rp-save-btn" id="rp-save" onclick="saveRoster()">Simpan Jadwal ✓</button>
+        <button class="rp-del-btn" onclick="deleteThisService()">Hapus</button>
+      </div>
     </div>
   </div> 
 
@@ -1847,7 +1850,7 @@ function openRoster(key){
   refreshCopyRow_();
   lockBodyScroll_();
   document.getElementById("rp").classList.add("on");
-  document.getElementById("rp-body").scrollTop=0;
+  var sw=document.getElementById("rp-scroll-wrap");if(sw)sw.scrollTop=0;
 }
 
 /* applyEdit mutates the slot in st.slots right away, so "Keluar Tanpa Simpan"
@@ -2534,14 +2537,14 @@ function buildPersonRoster(slot){
 function autoAssignAll(){
   var vols=(st.data&&(st.data.musicians||st.data.volunteers));
   if(!vols){showToast("Data belum dimuat.","warn");return;}
+  var isPaw=(st.dept==="PAW");
   var groups=(st.data&&st.data.groups)||{};
   var groupNames=Object.keys(groups);
-  var hasGroups=(groupNames.length>0);
-  if(hasGroups && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
+  if(isPaw && !groupNames.length){showToast("Belum ada group di sheet Volunteers (kolom Grup).","warn");return;}
   var emptySlots=st.slots.filter(function(s){return countFilled(s)===0;});
   if(!emptySlots.length){showToast("Semua sudah terisi! 🎉","ok");return;}
 
-  var msg=(hasGroups
+  var msg=(isPaw
     ? ("Mengisi "+emptySlots.length+" ibadah kosong — band diisi per group secara bergiliran.")
     : ("Mengisi "+emptySlots.length+" ibadah kosong — tiap peran diisi orang paling jarang bertugas."))
     +" Volunteer yang blokir tanggalnya dilewati.";
@@ -2551,7 +2554,7 @@ function autoAssignAll(){
     var gi=Math.floor(Math.random()*Math.max(1,groupNames.length));
     var payload=[],built=[];
     emptySlots.forEach(function(slot){
-      var res=hasGroups ? buildGroupRoster(groupNames[gi++ % groupNames.length],slot) : buildPersonRoster(slot);
+      var res=isPaw ? buildGroupRoster(groupNames[gi++ % groupNames.length],slot) : buildPersonRoster(slot);
       var clean={};
       PAW_ROLES.forEach(function(role){
         var names=(res[role]||[]).filter(function(x){return x;});
