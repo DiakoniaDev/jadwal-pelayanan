@@ -1640,7 +1640,7 @@ function prefetchDirektori_(dept){
 function renderJadwal(){
   if(!st.vol){document.getElementById("content").innerHTML=homeHTML();return;}
   var v=st.vol;var up=st.allEvents.filter(function(e){return !e.isPast;});
-  var h='<div class="vol-card" onclick="logoutToGate()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
+  var h='<div class="vol-card" onclick="confirmLogout()"><div class="vol-av" style="border-color:'+rcolor(v.roles[0]||"soundman")+';'+avCss(v.roles[0]||"soundman")+'">'+av(v.photo,v.name,52,v.roles[0])+'</div><div style="min-width:0;flex:1"><div class="vol-name">'+esc(v.name)+'</div><div class="vol-badges">'+v.roles.map(function(r){return'<span class="badge" style="'+chipCss(r)+'">'+esc(roleLabel(r))+'</span>';}).join('')+(v.group?'<span class="badge" style="background:rgba(255,255,255,.08);color:#8890aa">'+esc(fmtGroup(v.group))+'</span>':'')+'</div><div class="vol-meta">'+up.length+' ibadah mendatang</div></div><div class="vol-card-switch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></div></div>'+
     '<div class="sched-tabs"><button class="sched-tab'+(st.schedTab==="jadwal"?" on":"")+'" onclick="switchST(\'jadwal\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Jadwal</button><button class="sched-tab'+(st.schedTab==="riwayat"?" on":"")+'" onclick="switchST(\'riwayat\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Riwayat</button></div>'+
     (st.schedTab==="jadwal"?buildSched():buildRiwayat());
   document.getElementById("content").innerHTML=h;
@@ -2907,7 +2907,7 @@ function renderMasukan(){
 }
         
 function kirimMasukan(){
-  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){showToolModal("Tidak Bisa Kirim","Pesan tidak boleh kosong. Tulis pesan terlebih dahulu.","OK",function(){});return;}
+  var n=document.getElementById("fb-n").value.trim(),p=document.getElementById("fb-p").value.trim();if(!p){showToolModal("Tidak Bisa Kirim","Pesan tidak boleh kosong. Tulis pesan terlebih dahulu.","OK",function(){},"info");return;}
   var btn=document.getElementById("fb-btn");btnLoading(btn,"Mengirim…",true);
   google.script.run.withSuccessHandler(function(r){if(r.ok)document.getElementById("content").innerHTML='<div class="fb-ok"><div class="fb-ok-ico"></div><div class="fb-ok-h">Terima kasih!</div><div class="fb-ok-p">'+esc(r.msg)+'</div></div>';else{btn.disabled=false;btn.textContent="Kirim Masukan";alert(r.msg);}}).withFailureHandler(function(e){btn.disabled=false;btn.textContent="Kirim Masukan";alert("Gagal: "+e.message);}).submitFeedback(st.vol&&st.vol.dept,n,p);
 }
@@ -3286,13 +3286,13 @@ function onToolDressInput(i){var btn=document.getElementById("tdc-save-"+i);if(b
 function saveToolDresscode(i){
   var it=(st.toolDressList||[])[i];if(!it)return;
   var inp=document.getElementById("tdc-url-"+i),url=inp?inp.value.trim():"";
-  var btn=document.getElementById("tdc-save-"+i);if(btn){btn.disabled=true;btn.textContent="Menyimpan…";}
+  var btn=document.getElementById("tdc-save-"+i);if(btn){btnLoading(btn,"Menyimpan…",true);}
   callApi('saveDresscode',[it.date,it.service,url,st.toolDressDept,st.vol.name]).then(function(res){
     if(res&&res.ok){it.pdfUrl=url;st._toolDressByKey={};
       Object.keys(st.dressCache).forEach(function(k){if(k.indexOf(it.date)!==-1)delete st.dressCache[k];});
       showToast(res.msg||"Dresscode tersimpan.","ok");buildToolDresscodePage();}
-    else{if(btn){btn.disabled=false;btn.classList.add("dirty");}showToast((res&&res.msg)||"Gagal.","err");}
-  }).catch(function(e){if(btn){btn.disabled=false;btn.classList.add("dirty");}showToast("Gagal: "+(e.message||e),"err");});
+    else{if(btn){btnReset(btn,"Simpan ✓");btn.classList.add("dirty");}showToast((res&&res.msg)||"Gagal.","err");}
+  }).catch(function(e){if(btn){btnReset(btn,"Simpan ✓");btn.classList.add("dirty");}showToast("Gagal: "+(e.message||e),"err");});
 }
 
 function toggleToolDressAdd(){
@@ -3448,11 +3448,20 @@ function showToast(msg,type){
 }
 
 var _toolModalCb=null;
-function showToolModal(title,msg,confirmTxt,cb){
+function showToolModal(title,msg,confirmTxt,cb,variant){
   _toolModalCb=cb;
   document.getElementById("tool-modal-title").textContent=title;
   document.getElementById("tool-modal-msg").textContent=msg;
-  document.getElementById("tool-modal-confirm").textContent=confirmTxt;
+  var confirmBtn=document.getElementById("tool-modal-confirm");
+  var cancelBtn=document.getElementById("tool-modal-cancel");
+  confirmBtn.textContent=confirmTxt;
+  if(variant==="info"){
+    confirmBtn.style.background="#e8b84b";confirmBtn.style.color="#0a0c10";
+    cancelBtn.style.display="none";
+  } else {
+    confirmBtn.style.background="#f87171";confirmBtn.style.color="#fff";
+    cancelBtn.style.display="";
+  }
   var ov=document.getElementById("tool-modal-ov"),box=document.getElementById("tool-modal-box");
   if(ov){ov.style.opacity="1";ov.style.pointerEvents="all";}
   if(box)box.style.transform="translateX(-50%) translateY(0)";
@@ -3477,8 +3486,11 @@ function chMonth(d){
 }
 function scrollToDate(iso){var pre="card-"+iso.replace(/-/g,"_")+"_";var cards=document.querySelectorAll(".ecard");for(var i=0;i<cards.length;i++){if(cards[i].id.indexOf(pre)===0){var top=cards[i].getBoundingClientRect().top+window.pageYOffset-90;window.scrollTo({top:top,behavior:"smooth"});return;}}}
 
-// Tapping the name card (vol-card) sends the person back to the onboarding
-// gate to switch identity, replacing the old in-page search "✕ clear" flow.
+// Tapping the name card (vol-card) asks for confirmation, then sends
+// the person back to the onboarding gate to switch identity.
+function confirmLogout(){
+  showToolModal("Ganti Volunteer","Yakin ingin keluar dan ganti volunteer?","Keluar",function(){logoutToGate();});
+}
 function logoutToGate(){
   try{localStorage.removeItem(APP_CONFIG.storagePrefix+"schedCache");}catch(e){}      
   try{localStorage.removeItem(APP_CONFIG.storagePrefix + "volName");}catch(e){console.warn("localStorage remove failed",e);}
@@ -3779,7 +3791,7 @@ updateOnlineStatus_();
   <div id="tool-modal-msg" style="font-size:14px;color:#8890aa;line-height:1.65;margin-bottom:24px"></div>
   <div style="display:flex;flex-direction:column;gap:8px">
     <button id="tool-modal-confirm" onclick="doToolModalConfirm()" style="width:100%;padding:14px;border-radius:13px;border:none;background:#f87171;color:#fff;font-family:DM Sans,sans-serif;font-size:15px;font-weight:700;cursor:pointer"></button>
-    <button onclick="closeToolModal()" style="width:100%;padding:14px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:none;color:#8890aa;font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer">Batal</button>
+    <button id="tool-modal-cancel" onclick="closeToolModal()" style="width:100%;padding:14px;border-radius:13px;border:1.5px solid rgba(255,255,255,.1);background:none;color:#8890aa;font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;cursor:pointer">Batal</button>
   </div>
 </div>
 <div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e24b4a;color:#fff;text-align:center;padding:6px 16px;font-size:13px;font-weight:500;letter-spacing:.01em;transition:transform .3s ease;transform:translateY(-100%);">Kamu sedang offline — data mungkin tidak tersimpan</div>        
