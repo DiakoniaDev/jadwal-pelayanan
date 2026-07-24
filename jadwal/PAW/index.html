@@ -2822,7 +2822,7 @@ function buildRingkasanUI(data){
     } else {
       var names=mc.svcs.map(function(x){return serviceLabel(x.service);});
       mc.label=mergeLabel_(names);
-      mc.time=mc.svcs.map(function(x){return x.time||defaultTimesFor(x.service,true);}).join(" · ");
+      mc.time=mc.svcs.map(function(x){return x.time||defaultTimesFor(x.service,true);}).join("<br>");
       if(mc.svcs.some(function(x){return!!x.isSpecial;}))mc.isSpecial=true;
     }
   });
@@ -2874,7 +2874,7 @@ function buildRingkasanUI(data){
   cols.forEach(function(mc){
     var isSpec=mc.isSpecial;
     var style=isSpec?'background:rgba(192,132,252,.12);color:#c084fc':'';
-    h+='<th class="svc-hdr" style="'+style+'">'+esc(mc.label)+'<br><span style="color:#4a5070;font-size:10px">'+esc(mc.time)+'</span></th>';
+    h+='<th class="svc-hdr" style="'+style+'">'+esc(mc.label)+'<br><span style="color:#4a5070;font-size:10px">'+mc.time+'</span></th>';
   });
   h+='</tr>';
 
