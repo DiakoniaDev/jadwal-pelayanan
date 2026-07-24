@@ -2230,8 +2230,9 @@ function fetchSonglist_(ev,onOk,onErr){
 
 function fetchDresscode_(ev,onOk,onErr){
   var svc=svcOf_(ev);
+  var dept=st.vol&&st.vol.dept||"PAW";
   cachedFetch_(st.dressCache,"dress|"+ev.date+"|"+svc,function(ok,err){
-    google.script.run.withSuccessHandler(ok).withFailureHandler(err).getDresscode(ev.date,svc);
+    google.script.run.withSuccessHandler(ok).withFailureHandler(err).getDresscode(ev.date,svc,dept);
   },onOk,onErr||function(){});
 }
 
